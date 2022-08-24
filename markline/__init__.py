@@ -24,6 +24,15 @@ loc = Locator
 DEFAULT_META_ARRAYS = [
     "article:author",
     "article:tag",
+    "book:author",
+    "book:tag",
+    "music:album",
+    "music:musician",
+    "og:locale:alternate",
+    "video:actor",
+    "video:director",
+    "video:tag",
+    "video:writer",
 ]
 
 
@@ -81,6 +90,13 @@ def prepare_url(
     if trim:
         url = trim_url(url)
     return url
+
+
+def coalesce(*args):
+    """Return the first non-null value in a list of arguments."""
+    for arg in args:
+        if arg:
+            return arg
 
 
 def parse_time(
@@ -152,6 +168,41 @@ def new_tag(tag: str, literal: str = None, **attrs) -> element.Tag:
     return tag
 
 
+def quote_caption(figure: element.Tag):
+    """A convenience function to include a copy an image caption
+    below the image as a quote within markdown.
+
+    HTML5 allows for the caption of an image to be placed
+    in a <figcaption> tag. Following the render to markdown however,
+    the caption will no longer be readable in a markdown preview.
+
+    This function copies caption to a blockquote tag below
+    the image. It can be applied to the draft using the apply() method.
+
+    For example, the following HTML:
+
+    ```html
+    <figure>
+        <img src="cat_nespaper.jpg" alt="A cat reading a newspaper">
+        <figcaption>A cat reading the morning news, musing the future.</figcaption>
+    </figure>
+    ```
+
+    Would be rendered to the following markdown once applied:
+
+    ```markdown
+    ![A cat reading the morning news, musing the future.](cat_nespaper.jpg)
+
+    > A cat reading the morning news, musing the future.
+    ```
+
+    Args:
+        figure (element.Tag): An HTML figure tag.
+    """
+    quote = new_tag("blockquote", figure.text)
+    figure.insert_after(quote)
+
+
 class Markup:
     """
     Markup content extracted from a URL. The original extracted content is maintained
@@ -217,7 +268,7 @@ class Markup:
         """
         meta = {}
         for tag in self.original.find_all("meta"):
-            key = tag.attrs.get("property") or tag.attrs.get("name")
+            key = coalesce(tag.attrs.get("property"), tag.attrs.get("name"))
             value = tag.attrs.get("content")
             if key in DEFAULT_META_ARRAYS + self.meta_arrays:
                 meta[key] = meta.get(key, []) + [value]
@@ -235,10 +286,10 @@ class Markup:
             properties (dict): Default properties to store.
         """
         return {
-            "title": self.meta.get("og:title") or self.original.title.string,
-            "original_url": self.url,
-            "description": self.meta.get("og:description", None),
-            "publisher": self.meta.get("og:site_name", None),
+            "title": coalesce(self.meta.get("og:title"), self.original.title.string),
+            "url": self.url,
+            "description": self.meta.get("og:description"),
+            "publisher": self.meta.get("og:site_name"),
         }
 
     def add_properties(self, properties: dict) -> None:
@@ -340,7 +391,7 @@ class Markup:
                 https://pandoc.org/MANUAL.html#options
 
         Returns:
-            str: _description_
+            str: Pandoc formatted output.
         """
         doc = pandoc.read(self.draft.prettify(), format=input_format)
         return pandoc.write(doc, format=output_format, options=output_options)
