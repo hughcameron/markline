@@ -184,17 +184,17 @@ def quote_caption(figure: element.Tag):
 
     ```html
     <figure>
-        <img src="cat_nespaper.jpg" alt="A cat reading a newspaper">
-        <figcaption>A cat reading the morning news, musing the future.</figcaption>
+        <img src="dog_glasses.jpg" alt="A dog wearing glasses.">
+        <figcaption>A dog wearing glasses, musing the future. Photo by <a href="https://unsplash.com/@charlesdeluvio">charlesdeluvio</a>.</figcaption>
     </figure>
     ```
 
     Would be rendered to the following markdown once applied:
 
     ```markdown
-    ![A cat reading the morning news, musing the future.](cat_nespaper.jpg)
+    ![A dog wearing glasses, musing the future. Photo by [charlesdeluvio](https://unsplash.com/@charlesdeluvio)](dog_glasses.jpg).
 
-    > A cat reading the morning news, musing the future.
+    > A dog wearing glasses, musing the future. Photo by charlesdeluvio.
     ```
 
     Args:

@@ -1,5 +1,10 @@
-from markline import __version__
+import markline as ml
 
 
 def test_version():
-    assert __version__ == '0.1.0'
+    assert ml.__version__ == "0.1.0"
+
+
+def test_quote_caption():
+    """Test the quote_caption function."""
+    return True
