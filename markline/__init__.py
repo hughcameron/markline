@@ -329,16 +329,15 @@ class Markup:
         For a complete list of supported input and output formats, refer to the
         the Pandoc README: https://github.com/jgm/pandoc#pandoc
 
-        The recommended input format is 'html-native_divs-native_spans' to preserve
-        only the necessary HTML tags and attributes. For more information on this input formats
-        please refer to the Pandoc documentation: https://pandoc.org/MANUAL.html#raw-htmltex
-
-        The recommended output format is 'gfm', or Github Flavored Markdown (GFM) for Logseq.
-
         Args:
-            input_format (str, optional): Pandoc. Defaults to "html-native_divs-native_spans".
-            output_format (str, optional): _description_. Defaults to "gfm".
-            output_options (List[str], optional): _description_. Defaults to ["--wrap=none"].
+            input_format (str, optional): A Pandoc supported format.
+                Defaults to "html-native_divs-native_spans". This is recommended to
+                preserve only the necessary HTML tags and attributes.
+            output_format (str, optional): A Pandoc supported format.
+                Defaults to "gfm" or Github Flavored Markdown (GFM).
+            output_options (List[str], optional): A list of Pandoc write options.
+                Defaults to ["--wrap=none"]. See available options:
+                https://pandoc.org/MANUAL.html#options
 
         Returns:
             str: _description_
