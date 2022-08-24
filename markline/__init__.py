@@ -184,7 +184,7 @@ def quote_caption(figure: element.Tag):
 
     ```html
     <figure>
-        <img src="coffee.jpg" alt="Cofee cup on a newspaper.">
+        <img src="coffee.jpg" alt="Coffee cup on a newspaper.">
         <figcaption>A takeaway coffee with the morning news.</figcaption>
     </figure>
     ```

@@ -1,6 +1,6 @@
 # ![Markline](img/markline.svg)
 
-**Markline** convert Markup, of HyperText Markup Language (HTML), to Markdown (md) with a transformation pipeline.
+**Markline** converts Markup, of HyperText *Markup* Language (HTML), to *Markdown* (md) via a transformation pipeline.
 
 Techniques of the transformation pipeline are borrowed from data engineering.
 
