@@ -1,4 +1,4 @@
-# ![Markline](img/markline.png)
+# ![Markline](img/markline.svg)
 
 **Markline** convert Markup, of HyperText Markup Language (HTML), to Markdown (md) with a transformation pipeline.
 
