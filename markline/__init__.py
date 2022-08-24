@@ -152,12 +152,13 @@ def download_media(url: str, filename: str = None) -> str:
     return filename
 
 
-def new_tag(tag: str, literal: str = None, **attrs) -> element.Tag:
+def new_tag(tag: str, literal: str = None, attrs: dict = {}) -> element.Tag:
     """Generate a new BeautifulSoup tag with attributes and content.
 
     Args:
         tag (str): HTML tag name.
         literal (str, optional): Readable text content for the element. Defaults to None.
+        attrs (dict): HTML tag attributes.
 
     Returns:
         element.Tag: A new BeautifulSoup tag.
