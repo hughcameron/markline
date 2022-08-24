@@ -232,7 +232,7 @@ class Markup:
         unshorten: bool = True,
         trim: bool = True,
         headers: dict = {},
-        meta_arrays: list = None,
+        meta_arrays: list = [],
     ):
         self.headers = headers
         self.url = prepare_url(url, unshorten, trim, self.headers)
