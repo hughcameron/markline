@@ -2,7 +2,7 @@
 name = "markline"
 version = "0.1.0"
 description = "Convert Markup to Markdown with a transformation pipeline."
-authors = ["Hugh Cameron <hescameron@gmail.com>"]
+authors = ["Hugh Cameron <https://github.com/hughcameron>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
