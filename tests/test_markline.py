@@ -151,10 +151,6 @@ def test_drop():
     pass
 
 
-def test_process():
-    pass
-
-
 def test_render():
     pass
 

@@ -272,9 +272,9 @@ class Markup:
         """
         meta = {}
         for tag in self.original.find_all("meta"):
-            key_names = ["property", "name"]
-            key_names += [k for k in tag.attrs.keys() if k not in ["content"]]
-            key = coalesce(*(tag.attrs.get(k) for k in key_names))
+            key_terms = ["property", "name"]
+            key_terms += [k for k in tag.attrs.keys() if k != "content"]
+            key = coalesce(*(tag.attrs.get(k) for k in key_terms))
             value = tag.attrs.get("content")
             if key in DEFAULT_META_ARRAYS + self.meta_arrays:
                 meta[key] = meta.get(key, []) + [value]
@@ -364,13 +364,6 @@ class Markup:
         for loc in loclist:
             for result in self.draft.find_all(*loc):
                 result.decompose()
-
-    def process(self, pipeline: dict) -> None:
-        for step in pipeline:
-            method = step.get("method")
-            args = step.get("args", [])
-            kwargs = step.get("kwargs", {})
-            getattr(self, method)(*args, **kwargs)
 
     def render(
         self,
