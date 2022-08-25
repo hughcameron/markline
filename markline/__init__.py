@@ -340,7 +340,7 @@ class Markup:
         """
         editor(self)
 
-    def apply(self, loc: Locator | List[Locator], editor: Callable) -> None:
+    def apply(self, editor: Callable, *locations: Locator) -> None:
         """Apply an `editor` function to HTML elements.
         Use apply() or the 'apply' step in a pipeline to
         remove elements from the draft.
@@ -353,8 +353,7 @@ class Markup:
                 matching elements to apply changes.
             editor (Callable): Function to apply to matching elements from the draft.
         """
-        loclist = [loc] if isinstance(loc, Locator) else loc
-        for loc in loclist:
+        for loc in locations:
             for result in self.draft.find_all(*loc):
                 editor(result)
 
@@ -371,7 +370,7 @@ class Markup:
         """
         self.draft = self.draft.find(*loc)
 
-    def drop(self, loc: Locator | List[Locator]) -> None:
+    def drop(self, *locations: Locator) -> None:
         """Drop HTML elements.
         Use drop() or the 'drop' step in a pipeline to
         remove elements from the draft.
@@ -383,8 +382,7 @@ class Markup:
             loc (Locator | List[Locator]): Locator or list of locators of
                 matching elements to drop.
         """
-        loclist = [loc] if isinstance(loc, Locator) else loc
-        for loc in loclist:
+        for loc in locations:
             for result in self.draft.find_all(*loc):
                 result.decompose()
 

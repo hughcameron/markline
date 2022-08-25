@@ -176,12 +176,10 @@ def test_filter():
 def test_drop():
     expected = '<article>\n <h1 id="tips-for-writing-a-news-article">\n  Tips for writing a news article\n </h1>\n</article>\n'
     test_page.drop(
-        [
-            ml.loc("figure"),
-            ml.loc("section"),
-            ml.loc("p"),
-            ml.loc("hr"),
-        ]
+        ml.loc("figure"),
+        ml.loc("section"),
+        ml.loc("p"),
+        ml.loc("hr"),
     )
     soup_result = test_page.draft.find("article").prettify()
     test_page.draft = copy(test_page.original)
