@@ -313,7 +313,7 @@ class Markup:
         Args:
             editor (Callable): Editor function.
         """
-        self.draft = editor(self)
+        editor(self)
 
     def apply(self, loc: Locator | List[Locator], editor: Callable) -> None:
         """Apply an `editor` function to HTML elements.
