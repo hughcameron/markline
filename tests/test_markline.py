@@ -61,9 +61,9 @@ def test_coalesce():
 
 def test_parse_time():
     """Test the parse_time function."""
+    expected = datetime(2022, 8, 21, 3, 42, 10, tzinfo=timezone.utc)
     test_timestamp = "2022-08-21T03:42:10Z"
-    test_result = datetime(2022, 8, 21, 3, 42, 10, tzinfo=timezone.utc)
-    assert ml.parse_time(test_timestamp) == test_result
+    assert ml.parse_time(test_timestamp) == expected
 
 
 def test_download_media():
@@ -72,22 +72,22 @@ def test_download_media():
 
 def test_new_tag():
     """Test the new_tag function."""
+    expected = '<p class="test">\n test\n</p>'
     test_tag = ml.new_tag("p", literal="test", attrs={"class": "test"}).prettify()
-    test_result = '<p class="test">\n test\n</p>'
-    assert test_tag == test_result
+    assert test_tag == expected
 
 
 def test_quote_caption():
     """Test the quote_caption function.
     test_page.draft is reset to ensure the test suite remains idempotent.
     """
-    ml.quote_caption(test_page.draft.find("figure"))
-    html_result = (
+    expected = (
         "<blockquote>\n A takeaway coffee with the morning news.\n</blockquote>\n"
     )
+    ml.quote_caption(test_page.draft.find("figure"))
     soup_result = test_page.draft.find("blockquote").prettify()
     test_page.draft = copy(test_page.original)
-    assert soup_result == html_result
+    assert soup_result == expected
 
 
 def test_fetch_content():
@@ -95,7 +95,7 @@ def test_fetch_content():
 
 
 def test_gather_meta():
-    dict_result = {
+    expected = {
         "UTF-8": None,
         "X-UA-Compatible": "IE=edge",
         "viewport": "width=device-width, initial-scale=1.0",
@@ -118,45 +118,45 @@ def test_gather_meta():
         "twitter:description": "Learn how to publish articles in HTML5",
         "twitter:image": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/coffee.jpeg",
     }
-    assert test_page.meta == dict_result
+    assert test_page.meta == expected
 
 
 def test_set_properties():
-    dict_result = {
+    expected = {
         "title": "Tips for writing a news article",
         "url": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html",
         "description": "Learn how to publish articles in HTML5",
         "publisher": "Webber Publishing",
     }
-    assert test_page.properties == dict_result
+    assert test_page.properties == expected
 
 
 def test_add_properties():
     """Test the add_properties function
     test_page.properties is reset to ensure the test suite remains idempotent.
     """
-    test_page.add_properties({"authors": test_page.meta.get("article:author")})
-    update_result = copy(test_page.properties)
-    dict_result = {
+    expected = {
         "title": "Tips for writing a news article",
         "url": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html",
         "description": "Learn how to publish articles in HTML5",
         "publisher": "Webber Publishing",
         "authors": ["Webber Page"],
     }
+    test_page.add_properties({"authors": test_page.meta.get("article:author")})
+    update_result = copy(test_page.properties)
     del test_page.properties["authors"]
-    assert update_result == dict_result
+    assert update_result == expected
 
 
 def test_edit():
     """Test the edit method.
     test_page.draft is reset to ensure the test suite remains idempotent.
     """
+    expected = "<strong>\n By Webber Page\n</strong>\n"
     test_page.edit(add_byline)
     soup_result = test_page.draft.find("strong").prettify()
-    html_result = "<strong>\n By Webber Page\n</strong>\n"
     test_page.draft = copy(test_page.original)
-    assert soup_result == html_result
+    assert soup_result == expected
 
 
 def test_apply():
@@ -164,11 +164,28 @@ def test_apply():
 
 
 def test_filter():
-    pass
+    expected = (
+        "<figcaption>\n A takeaway coffee with the morning news.\n</figcaption>\n"
+    )
+    test_page.filter(ml.loc("figcaption"))
+    soup_result = test_page.draft.prettify()
+    test_page.draft = copy(test_page.original)
+    assert soup_result == expected
 
 
 def test_drop():
-    pass
+    expected = '<article>\n <h1 id="tips-for-writing-a-news-article">\n  Tips for writing a news article\n </h1>\n</article>\n'
+    test_page.drop(
+        [
+            ml.loc("figure"),
+            ml.loc("section"),
+            ml.loc("p"),
+            ml.loc("hr"),
+        ]
+    )
+    soup_result = test_page.draft.find("article").prettify()
+    test_page.draft = copy(test_page.original)
+    assert soup_result == expected
 
 
 def test_render():
