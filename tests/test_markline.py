@@ -1,3 +1,4 @@
+from copy import copy
 from datetime import datetime, timezone
 
 import markline as ml
@@ -21,7 +22,7 @@ with open("tests/test.html") as f:
 
 def add_byline(markup: ml.Markup):
 
-    authors = ", ".join([a for a in markup.properties.get("authors")])
+    authors = ", ".join(test_page.meta.get("article:author"))
     byline = ml.new_tag("strong", literal="By " + authors)
 
     header = markup.draft.find("h1")
@@ -30,6 +31,10 @@ def add_byline(markup: ml.Markup):
 
 def test_version():
     assert ml.__version__ == "0.1.0"
+
+
+def test_package_available():
+    assert ml.package_available("urllib")
 
 
 def test_unshorten_url():
@@ -73,11 +78,16 @@ def test_new_tag():
 
 
 def test_quote_caption():
+    """Test the quote_caption function.
+    test_page.draft is reset to ensure the test suite remains idempotent.
+    """
     ml.quote_caption(test_page.draft.find("figure"))
-    test_result = (
+    html_result = (
         "<blockquote>\n A takeaway coffee with the morning news.\n</blockquote>\n"
     )
-    assert test_page.draft.find("blockquote").prettify() == test_result
+    soup_result = test_page.draft.find("blockquote").prettify()
+    test_page.draft = copy(test_page.original)
+    assert soup_result == html_result
 
 
 def test_fetch_content():
@@ -85,7 +95,7 @@ def test_fetch_content():
 
 
 def test_gather_meta():
-    test_result = {
+    dict_result = {
         "UTF-8": None,
         "X-UA-Compatible": "IE=edge",
         "viewport": "width=device-width, initial-scale=1.0",
@@ -108,35 +118,45 @@ def test_gather_meta():
         "twitter:description": "Learn how to publish articles in HTML5",
         "twitter:image": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/coffee.jpeg",
     }
-    assert test_page.meta == test_result
+    assert test_page.meta == dict_result
 
 
 def test_set_properties():
-    test_result = {
+    dict_result = {
         "title": "Tips for writing a news article",
         "url": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html",
         "description": "Learn how to publish articles in HTML5",
         "publisher": "Webber Publishing",
     }
-    assert test_page.properties == test_result
+    assert test_page.properties == dict_result
 
 
 def test_add_properties():
+    """Test the add_properties function
+    test_page.properties is reset to ensure the test suite remains idempotent.
+    """
     test_page.add_properties({"authors": test_page.meta.get("article:author")})
-    test_result = {
+    update_result = copy(test_page.properties)
+    dict_result = {
         "title": "Tips for writing a news article",
         "url": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html",
         "description": "Learn how to publish articles in HTML5",
         "publisher": "Webber Publishing",
         "authors": ["Webber Page"],
     }
-    assert test_page.properties == test_result
+    del test_page.properties["authors"]
+    assert update_result == dict_result
 
 
 def test_edit():
+    """Test the edit method.
+    test_page.draft is reset to ensure the test suite remains idempotent.
+    """
     test_page.edit(add_byline)
-    test_result = "<strong>\n By Webber Page\n</strong>\n"
-    return test_page.draft.find("strong").prettify() == test_result
+    soup_result = test_page.draft.find("strong").prettify()
+    html_result = "<strong>\n By Webber Page\n</strong>\n"
+    test_page.draft = copy(test_page.original)
+    assert soup_result == html_result
 
 
 def test_apply():

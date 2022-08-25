@@ -1,6 +1,7 @@
 __version__ = "0.1.0"
 
 import copy
+import importlib.util
 from datetime import datetime
 from typing import Callable, List, NamedTuple
 
@@ -34,6 +35,23 @@ DEFAULT_META_ARRAYS = [
     "video:tag",
     "video:writer",
 ]
+
+
+def package_available(package_name: str) -> bool:
+    """Check if a package is installed.
+    This is a convenience function for checking if a package is installed.
+    It is useful for checking if a package is installed before importing it.
+
+    Args:
+        package_name (str): Name of the package to check.
+
+    Returns:
+        bool: True if the package is installed.
+    """
+    spec = importlib.util.find_spec(package_name)
+    if spec is None:
+        return False
+    return True
 
 
 def unshorten_url(url: str, headers: dict = {}) -> str:
@@ -245,8 +263,11 @@ class Markup:
         self.meta = self.gather_meta()
         self.properties = self.set_properties()
 
-    def fetch_content(self, url: str) -> BeautifulSoup:
+    def fetch_content(self, url: str, parser: str = "lxml") -> BeautifulSoup:
         """Fetch the HTML content of a URL.
+        Content is fetched from the URL and parsed as a BeautifulSoup object.
+        If lxml the html5lib parser is used. Parsing with the lxml parser is
+        much faster than the html5lib parser.
 
         Args:
             url (str): URL to fetch.
@@ -254,8 +275,10 @@ class Markup:
         Returns:
             BeautifulSoup: BeautifulSoup object of the HTML content.
         """
+        if parser == "lxml" and not package_available("lxml"):
+            parser = "html.parser"
         response = requests.get(url, self.headers)
-        return BeautifulSoup(response.content, "html.parser")
+        return BeautifulSoup(response.content, parser)
 
     def gather_meta(self) -> dict:
         """Extract metadata from the <meta> tags within HTML content.
