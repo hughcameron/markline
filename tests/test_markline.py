@@ -12,16 +12,23 @@ LONG_URL = "https://raw.githubusercontent.com/hughcameron/markline/main/tests/te
 IMG_URL = (
     "https://raw.githubusercontent.com/hughcameron/markline/main/tests/coffee.jpeg"
 )
+LOCAL_HTML = "tests/test.html"
 
 
 test_page = ml.Markup(SHORT_URL)
+local_page = ml.Markup(filepath=LOCAL_HTML)
 
 with open("tests/test.html") as f:
-    local_page = BeautifulSoup(f.read(), "html.parser")
+    direct_bs4 = BeautifulSoup(f.read(), "lxml")
 
 
 def add_byline(markup: ml.Markup):
+    """Add a byline to the article.
+    This is a test function for the edit method.
 
+    Args:
+        markup (ml.Markup): The markup object to edit.
+    """
     authors = ", ".join(test_page.meta.get("article:author"))
     byline = ml.new_tag("strong", literal="By " + authors)
 
@@ -30,6 +37,7 @@ def add_byline(markup: ml.Markup):
 
 
 def test_version():
+    """Ensure test suite is up to date with the latest version."""
     assert ml.__version__ == "0.1.0"
 
 
@@ -67,6 +75,7 @@ def test_parse_time():
 
 
 def test_download_media():
+    """Test the download_media method."""
     assert ml.download_media(IMG_URL) == "coffee.jpeg"
 
 
@@ -90,11 +99,16 @@ def test_quote_caption():
     assert soup_result == expected
 
 
-def test_fetch_content():
-    assert test_page.original.prettify() == local_page.prettify()
+def test_fetch_url_content():
+    assert test_page.original.prettify() == direct_bs4.prettify()
+
+
+def test_fetch_local_content():
+    assert local_page.original.prettify() == direct_bs4.prettify()
 
 
 def test_gather_meta():
+    """Test the gather_meta function."""
     expected = {
         "UTF-8": None,
         "X-UA-Compatible": "IE=edge",
@@ -122,6 +136,7 @@ def test_gather_meta():
 
 
 def test_set_properties():
+    """Test the set_properties function."""
     expected = {
         "title": "Tips for writing a news article",
         "url": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html",
@@ -164,6 +179,9 @@ def test_apply():
 
 
 def test_filter():
+    """Test the filter method.
+    test_page.draft is reset to ensure the test suite remains idempotent.
+    """
     expected = (
         "<figcaption>\n A takeaway coffee with the morning news.\n</figcaption>\n"
     )
@@ -174,13 +192,11 @@ def test_filter():
 
 
 def test_drop():
+    """Test the filter method.
+    test_page.draft is reset to ensure the test suite remains idempotent.
+    """
     expected = '<article>\n <h1 id="tips-for-writing-a-news-article">\n  Tips for writing a news article\n </h1>\n</article>\n'
-    test_page.drop(
-        ml.loc("figure"),
-        ml.loc("section"),
-        ml.loc("p"),
-        ml.loc("hr"),
-    )
+    test_page.drop(ml.loc("figure"), ml.loc("section"), ml.loc("p"), ml.loc("hr"))
     soup_result = test_page.draft.find("article").prettify()
     test_page.draft = copy(test_page.original)
     assert soup_result == expected

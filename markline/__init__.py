@@ -249,25 +249,43 @@ class Markup:
 
     def __init__(
         self,
-        url: str,
+        url: str = None,
+        filepath: str = None,
+        parser: str = "lxml",
         unshorten: bool = True,
         trim: bool = True,
         headers: dict = {},
         meta_arrays: list = [],
     ):
-        self.headers = headers
-        self.url = prepare_url(url, unshorten, trim, self.headers)
-        self.original = self.fetch_content(url)
+        if not any((url, filepath)):
+            raise ValueError("URL or filepath must be provided.")
+        if all((url, filepath)):
+            raise ValueError("Only one of URL or filepath must be provided.")
+        if filepath:
+            self.url = filepath
+        if url:
+            self.headers = headers
+            self.url = prepare_url(url, unshorten, trim, self.headers)
+        self.original = self.fetch_content(url=url, parser=parser, filepath=filepath)
         self.draft = copy.copy(self.original)
         self.meta_arrays = meta_arrays
         self.meta = self.gather_meta()
         self.properties = self.set_properties()
 
-    def fetch_content(self, url: str, parser: str = "lxml") -> BeautifulSoup:
+    def fetch_content(
+        self,
+        url: str,
+        parser: str = "lxml",
+        filepath: str = None,
+    ) -> BeautifulSoup:
         """Fetch the HTML content of a URL.
-        Content is fetched from the URL and parsed as a BeautifulSoup object.
-        If lxml the html5lib parser is used. Parsing with the lxml parser is
-        much faster than the html5lib parser.
+        Content is fetched from the URL or local file and parsed as
+        a BeautifulSoup object. If lxml is not available Python’s
+        standard HTML library is used. Parsing with the lxml parser is
+        faster than the standard library parser.
+
+        Read more about package dependencies here:
+        https://github.com/hughcameron/markline#dependencies
 
         Args:
             url (str): URL to fetch.
@@ -277,6 +295,9 @@ class Markup:
         """
         if parser == "lxml" and not package_available("lxml"):
             parser = "html.parser"
+        if filepath:
+            with open(filepath, "r") as f:
+                return BeautifulSoup(f.read(), parser)
         response = requests.get(url, self.headers)
         return BeautifulSoup(response.content, parser)
 
