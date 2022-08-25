@@ -86,7 +86,8 @@ def test_fetch_content():
 
 def test_gather_meta():
     test_result = {
-        None: "IE=edge",
+        "UTF-8": None,
+        "X-UA-Compatible": "IE=edge",
         "viewport": "width=device-width, initial-scale=1.0",
         "keywords": "HTML5, Article, Publishing",
         "author": "Webber Page",

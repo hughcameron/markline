@@ -272,7 +272,9 @@ class Markup:
         """
         meta = {}
         for tag in self.original.find_all("meta"):
-            key = coalesce(tag.attrs.get("property"), tag.attrs.get("name"))
+            key_names = ["property", "name"]
+            key_names += [k for k in tag.attrs.keys() if k not in ["content"]]
+            key = coalesce(*(tag.attrs.get(k) for k in key_names))
             value = tag.attrs.get("content")
             if key in DEFAULT_META_ARRAYS + self.meta_arrays:
                 meta[key] = meta.get(key, []) + [value]
