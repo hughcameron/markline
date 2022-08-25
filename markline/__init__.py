@@ -258,9 +258,9 @@ class Markup:
         meta_arrays: list = [],
     ):
         if not any((url, filepath)):
-            raise ValueError("URL or filepath must be provided.")
+            raise ValueError("One of URL or filepath must be provided.")
         if all((url, filepath)):
-            raise ValueError("Only one of URL or filepath must be provided.")
+            raise ValueError("Only one of URL or filepath can be provided.")
         if filepath:
             self.url = filepath
         if url:
@@ -289,6 +289,8 @@ class Markup:
 
         Args:
             url (str): URL to fetch.
+            parser (str, optional): Parser to use. Defaults to "lxml".
+            filepath (str, optional): Path to a local file. Defaults to None.
 
         Returns:
             BeautifulSoup: BeautifulSoup object of the HTML content.
@@ -370,10 +372,11 @@ class Markup:
         the apply() method is used to edit specific elements within the HTML content.
 
         Args:
-            loc (Locator | List[Locator]): Locator or list of locators of
-                matching elements to apply changes.
             editor (Callable): Function to apply to matching elements from the draft.
+            loc (Locator): Locator or list of locators of
+                matching elements to apply changes.
         """
+        assert callable(editor), "Editor must be a callable."
         for loc in locations:
             for result in self.draft.find_all(*loc):
                 editor(result)
@@ -400,7 +403,7 @@ class Markup:
         the drop() method is used to remove matching elements from the draft.
 
         Args:
-            loc (Locator | List[Locator]): Locator or list of locators of
+            loc (Locator): Locator or list of locators of
                 matching elements to drop.
         """
         for loc in locations:
@@ -437,20 +440,31 @@ class Markup:
         doc = pandoc.read(self.draft.prettify(), format=input_format)
         return pandoc.write(doc, format=output_format, options=output_options)
 
-    def to_html(self) -> str:
+    def to_html(self, filepath: str = None) -> str:
         """Render the draft as HTML.
+        If a filepath is provided, the HTML content is written to the file.
 
         Returns:
             str: HTML content.
+            filepath (str, optional): Filepath to write HTML content to.
+                 Defaults to None.
         """
+        if filepath:
+            with open(filepath, "w") as f:
+                return f.write(self.draft.prettify())
         return self.draft.prettify()
 
-    def to_md(self) -> str:
+    def to_md(self, filepath: str = None) -> str:
         """Render the draft as Markdown.
-
         Accepts the default input and output formats for the render() method.
+        If a filepath is provided, the markdown content is written to the file.
 
         Returns:
             str: Markdown content.
+            filepath (str, optional): Filepath to write HTML content to.
+                Defaults to None.
         """
+        if filepath:
+            with open(filepath, "w") as f:
+                return f.write(self.render())
         return self.render()

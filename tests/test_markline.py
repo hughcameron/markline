@@ -15,11 +15,14 @@ IMG_URL = (
 LOCAL_HTML = "tests/test.html"
 
 
-test_page = ml.Markup(SHORT_URL)
-local_page = ml.Markup(filepath=LOCAL_HTML)
+remote_html = ml.Markup(SHORT_URL)
+local_html = ml.Markup(filepath=LOCAL_HTML)
 
 with open("tests/test.html") as f:
-    direct_bs4 = BeautifulSoup(f.read(), "lxml")
+    soup_html = BeautifulSoup(f.read(), "lxml")
+
+with open("tests/test.md") as f:
+    local_md = f.read()
 
 
 def add_byline(markup: ml.Markup):
@@ -29,7 +32,7 @@ def add_byline(markup: ml.Markup):
     Args:
         markup (ml.Markup): The markup object to edit.
     """
-    authors = ", ".join(test_page.meta.get("article:author"))
+    authors = ", ".join(remote_html.meta.get("article:author"))
     byline = ml.new_tag("strong", literal="By " + authors)
 
     header = markup.draft.find("h1")
@@ -47,7 +50,7 @@ def test_package_available():
 
 def test_unshorten_url():
     """Test the short_url function."""
-    assert test_page.url == LONG_URL
+    assert remote_html.url == LONG_URL
 
 
 def test_trim_url():
@@ -88,23 +91,23 @@ def test_new_tag():
 
 def test_quote_caption():
     """Test the quote_caption function.
-    test_page.draft is reset to ensure the test suite remains idempotent.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
     """
     expected = (
         "<blockquote>\n A takeaway coffee with the morning news.\n</blockquote>\n"
     )
-    ml.quote_caption(test_page.draft.find("figure"))
-    soup_result = test_page.draft.find("blockquote").prettify()
-    test_page.draft = copy(test_page.original)
+    ml.quote_caption(remote_html.draft.find("figure"))
+    soup_result = remote_html.draft.find("blockquote").prettify()
+    remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
 
 
 def test_fetch_url_content():
-    assert test_page.original.prettify() == direct_bs4.prettify()
+    assert remote_html.original.prettify() == soup_html.prettify()
 
 
 def test_fetch_local_content():
-    assert local_page.original.prettify() == direct_bs4.prettify()
+    assert local_html.original.prettify() == soup_html.prettify()
 
 
 def test_gather_meta():
@@ -132,7 +135,7 @@ def test_gather_meta():
         "twitter:description": "Learn how to publish articles in HTML5",
         "twitter:image": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/coffee.jpeg",
     }
-    assert test_page.meta == expected
+    assert remote_html.meta == expected
 
 
 def test_set_properties():
@@ -143,12 +146,12 @@ def test_set_properties():
         "description": "Learn how to publish articles in HTML5",
         "publisher": "Webber Publishing",
     }
-    assert test_page.properties == expected
+    assert remote_html.properties == expected
 
 
 def test_add_properties():
     """Test the add_properties function
-    test_page.properties is reset to ensure the test suite remains idempotent.
+    remote_html.properties is reset to ensure the test suite remains idempotent.
     """
     expected = {
         "title": "Tips for writing a news article",
@@ -157,20 +160,20 @@ def test_add_properties():
         "publisher": "Webber Publishing",
         "authors": ["Webber Page"],
     }
-    test_page.add_properties({"authors": test_page.meta.get("article:author")})
-    update_result = copy(test_page.properties)
-    del test_page.properties["authors"]
+    remote_html.add_properties({"authors": remote_html.meta.get("article:author")})
+    update_result = copy(remote_html.properties)
+    del remote_html.properties["authors"]
     assert update_result == expected
 
 
 def test_edit():
     """Test the edit method.
-    test_page.draft is reset to ensure the test suite remains idempotent.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
     """
     expected = "<strong>\n By Webber Page\n</strong>\n"
-    test_page.edit(add_byline)
-    soup_result = test_page.draft.find("strong").prettify()
-    test_page.draft = copy(test_page.original)
+    remote_html.edit(add_byline)
+    soup_result = remote_html.draft.find("strong").prettify()
+    remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
 
 
@@ -180,35 +183,38 @@ def test_apply():
 
 def test_filter():
     """Test the filter method.
-    test_page.draft is reset to ensure the test suite remains idempotent.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
     """
     expected = (
         "<figcaption>\n A takeaway coffee with the morning news.\n</figcaption>\n"
     )
-    test_page.filter(ml.loc("figcaption"))
-    soup_result = test_page.draft.prettify()
-    test_page.draft = copy(test_page.original)
+    remote_html.filter(ml.loc("figcaption"))
+    soup_result = remote_html.draft.prettify()
+    remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
 
 
 def test_drop():
     """Test the filter method.
-    test_page.draft is reset to ensure the test suite remains idempotent.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
     """
     expected = '<article>\n <h1 id="tips-for-writing-a-news-article">\n  Tips for writing a news article\n </h1>\n</article>\n'
-    test_page.drop(ml.loc("figure"), ml.loc("section"), ml.loc("p"), ml.loc("hr"))
-    soup_result = test_page.draft.find("article").prettify()
-    test_page.draft = copy(test_page.original)
+    remote_html.drop(ml.loc("figure"), ml.loc("section"), ml.loc("p"), ml.loc("hr"))
+    soup_result = remote_html.draft.find("article").prettify()
+    remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
 
 
 def test_render():
-    pass
+    """Test the render method."""
+    remote_html.render() == local_md
 
 
 def test_to_html():
-    pass
+    """Test the to_html method."""
+    remote_html.to_html() == soup_html.prettify()
 
 
 def test_to_md():
-    pass
+    """Test the to_md method."""
+    remote_html.to_md() == local_md
