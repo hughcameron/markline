@@ -146,7 +146,10 @@ def download_media(url: str, filename: str = None) -> str:
     if not filename:
         name = furl(url).path.segments[-1]
         media_type = response.headers.get("Content-Type").split("/")[1]
-        filename = f"{name}.{media_type}"
+        if name.endswith("." + media_type):
+            filename = name
+        else:
+            filename = f"{name}.{media_type}"
     with open(filename, "wb") as f:
         f.write(response.content)
     return filename
@@ -184,7 +187,7 @@ def quote_caption(figure: element.Tag):
 
     ```html
     <figure>
-        <img src="coffee.jpg" alt="Coffee cup on a newspaper.">
+        <img src="coffee.jpeg" alt="Coffee cup on a newspaper.">
         <figcaption>A takeaway coffee with the morning news.</figcaption>
     </figure>
     ```
@@ -192,7 +195,7 @@ def quote_caption(figure: element.Tag):
     Would be rendered to the following markdown once applied:
 
     ```markdown
-    ![A takeaway coffee with the morning news.](coffee.jpg).
+    ![A takeaway coffee with the morning news.](coffee.jpeg).
 
     > A takeaway coffee with the morning news.
     ```
