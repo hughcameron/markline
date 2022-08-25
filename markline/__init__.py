@@ -369,7 +369,7 @@ class Markup:
         Args:
             loc (Locator): Locator of matching elements to inlcude.
         """
-        self.draft = self.draft.find_all(*loc)
+        self.draft = self.draft.find(*loc)
 
     def drop(self, loc: Locator | List[Locator]) -> None:
         """Drop HTML elements.
