@@ -1,6 +1,6 @@
 # <img src="img/markline.svg" width="200">
 
-**Markline** converts HTML to Markdown and allows for a transformation pipeline. Transformation techniques of the transformation pipeline are borrowed from data engineering concepts.
+**Markline** converts HTML to Markdown and supports transformation methods borrowed from data engineering concepts. The goal of this project is to provide a simple API that renders HTML to Markdown for note management applications such as [Logseq](https://logseq.com).
 
 
 ## Getting Started
