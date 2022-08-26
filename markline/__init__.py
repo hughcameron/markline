@@ -2,8 +2,10 @@ __version__ = "0.1.0"
 
 import copy
 import importlib.util
+import re
+from builtins import slice
 from datetime import datetime
-from typing import Callable, List, NamedTuple
+from typing import Callable, List, NamedTuple, Union
 
 import pandoc
 import pytz
@@ -115,6 +117,41 @@ def coalesce(*args):
     for arg in args:
         if arg:
             return arg
+
+
+def extract(
+    pattern: str,
+    string: str,
+    group: Union[int, slice] = 0,
+) -> Union[str, List[str]]:
+    """_summary_
+
+    Args:
+        pattern (str): Pattern to extract.
+        string (str): String to extract from.
+        group (Union[int, slice], optional): Group to extract. Defaults to 0.
+
+    Returns:
+        Union[str, List[str]]: Extracted value.
+    """
+    result = re.findall(pattern, string)
+    if result:
+        return result[group]
+
+
+def extract_all(pattern: str, string: str) -> List[str]:
+    """_summary_
+
+    Args:
+        pattern (str): Pattern to extract.
+        string (str): String to extract from.
+
+    Returns:
+        List[str]: Extracted values.
+    """
+    result = re.findall(pattern, string)
+    if result:
+        return result
 
 
 def parse_time(

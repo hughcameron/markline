@@ -4,10 +4,9 @@ from datetime import datetime, timezone
 import markline as ml
 from bs4 import BeautifulSoup
 
+SHORT_URL = "https://tinyurl.com/mrx7da4n"
 # This short URL: https://tinyurl.com/mrx7da4n
 # redirects to the test page at: https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html
-
-SHORT_URL = "https://tinyurl.com/mrx7da4n"
 LONG_URL = "https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html"
 IMG_URL = (
     "https://raw.githubusercontent.com/hughcameron/markline/main/tests/coffee.jpeg"
@@ -68,6 +67,30 @@ def test_prepare_url():
 def test_coalesce():
     """Test the coalesce function."""
     assert ml.coalesce(None, "default") == "default"
+
+
+def test_extract():
+    """Test the extract function."""
+    expected = "123"
+    string = "this-is-a-test-123"
+    pattern = r"\-(\d+)$"
+    assert ml.extract(pattern, string) == expected
+
+
+def test_extract_slice():
+    """Test the extract function."""
+    expected = ["this", "is"]
+    string = "this-is-a-test-123"
+    pattern = r"(\w+)"
+    assert ml.extract(pattern, string, slice(0, 2)) == expected
+
+
+def test_extract_all():
+    """Test the extract_all function."""
+    expected = ["this", "is", "a", "test", "123"]
+    string = "this-is-a-test-123"
+    pattern = r"(\w+)"
+    assert ml.extract_all(pattern, string) == expected
 
 
 def test_parse_time():
