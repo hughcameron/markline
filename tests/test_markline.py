@@ -229,7 +229,14 @@ def test_edit():
 
 
 def test_apply():
-    pass
+    """Test the apply method."""
+    expected = (
+        "<blockquote>\n A takeaway coffee with the morning news.\n</blockquote>\n"
+    )
+    remote_html.apply(ml.quote_caption, ml.loc(name="figure"))
+    soup_result = remote_html.draft.find("blockquote").prettify()
+    remote_html.draft = copy(remote_html.original)
+    assert soup_result == expected
 
 
 def test_filter():

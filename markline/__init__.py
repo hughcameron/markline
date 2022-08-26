@@ -402,18 +402,18 @@ class Markup:
     def edit(self, editor: Callable) -> None:
         """Edit the HTML content with an editor function.
 
-        The editor function should accept a BeautifulSoup
-        object and return a BeautifulSoup object.
+        The editor function should accept a Markup object.
 
         Args:
-            editor (Callable): Editor function.
+            editor (function): Editor function.
         """
+        assert callable(editor), "Editor must be a callable."
         editor(self)
 
     def apply(self, editor: Callable, *locations: Locator) -> None:
         """Apply an `editor` function to HTML elements.
-        Use apply() or the 'apply' step in a pipeline to
-        remove elements from the draft.
+        Use apply() edit elements matching a specified location within the draft.
+        The editor function should accept a bs4.element.Tag object.
 
         While the edit() method is used to edit the HTML content as a whole,
         the apply() method is used to edit specific elements within the HTML content.
@@ -430,7 +430,7 @@ class Markup:
 
     def filter(self, loc: Locator) -> None:
         """Filter HTML elements.
-        Use filter() to remove elements from the draft.
+        Use filter() to reduce the draft to matching elements.
 
         The filter() method accepts a single locator and
         removes all non-matching elements from the draft.
