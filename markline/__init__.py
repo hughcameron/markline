@@ -21,8 +21,6 @@ class Locator(NamedTuple):
     recursive: bool = True
     limit: int = None
 
-    __str__ = lambda self: f"<{self.name}>{self.attrs if self.attrs else ''}"
-
 
 loc = Locator
 
@@ -469,11 +467,16 @@ class Markup:
         Returns:
             dict: Count of matching elements dropped.
         """
-        loc_count = []
-        for loc in locations:
-            for _ in self.draft.find_all(*loc):
-                loc_count.append(str(loc))
-        return dict(Counter(loc_count).most_common())
+        loc_count = Counter()
+        if locations:
+            for loc in locations:
+                loc_count[str(loc)] = 0
+                for _ in self.draft.find_all(*loc):
+                    loc_count[str(loc)] += 1
+            return dict(loc_count.most_common())
+        else:
+            elems = [e.name for e in self.draft.find_all()]
+            return dict(Counter(elems).most_common())
 
     def render(
         self,

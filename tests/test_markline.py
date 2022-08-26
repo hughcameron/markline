@@ -258,8 +258,42 @@ def test_drop():
 
 def test_counts():
     """Test the counts method."""
-    expected = {"<meta>": 22}
+    expected = {"Locator(name='meta', attrs={}, recursive=True, limit=None)": 22}
     assert remote_html.counts(ml.loc(name="meta")) == expected
+
+
+def test_counts_tag_not_present():
+    """Test the counts method."""
+    expected = {
+        "Locator(name='tag_not_present', attrs={}, recursive=True, limit=None)": 0
+    }
+    assert remote_html.counts(ml.loc(name="tag_not_present")) == expected
+
+
+def test_counts_all_elements():
+    """Test the counts method with no Locations supplied."""
+    expected = {
+        "meta": 22,
+        "li": 9,
+        "p": 4,
+        "a": 3,
+        "section": 3,
+        "h2": 3,
+        "link": 2,
+        "ul": 2,
+        "hr": 2,
+        "html": 1,
+        "head": 1,
+        "title": 1,
+        "body": 1,
+        "aside": 1,
+        "article": 1,
+        "h1": 1,
+        "figure": 1,
+        "img": 1,
+        "figcaption": 1,
+    }
+    assert remote_html.counts() == expected
 
 
 def test_render():
