@@ -161,6 +161,34 @@ def test_gather_meta():
     assert remote_html.meta == expected
 
 
+def test_gather_meta_counts():
+    """Test the gather_meta function with counts set to True."""
+    expected = {
+        "article:tag": 2,
+        "UTF-8": 1,
+        "X-UA-Compatible": 1,
+        "viewport": 1,
+        "keywords": 1,
+        "author": 1,
+        "title": 1,
+        "description": 1,
+        "og:type": 1,
+        "og:url": 1,
+        "og:title": 1,
+        "og:site_name": 1,
+        "og:description": 1,
+        "og:image": 1,
+        "article:author": 1,
+        "twitter:card": 1,
+        "twitter:domain": 1,
+        "twitter:url": 1,
+        "twitter:title": 1,
+        "twitter:description": 1,
+        "twitter:image": 1,
+    }
+    assert remote_html.gather_meta(counts=True) == expected
+
+
 def test_set_properties():
     """Test the set_properties function."""
     expected = {
@@ -226,6 +254,12 @@ def test_drop():
     soup_result = remote_html.draft.find("article").prettify()
     remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
+
+
+def test_counts():
+    """Test the counts method."""
+    expected = {"<meta>": 22}
+    assert remote_html.counts(ml.loc(name="meta")) == expected
 
 
 def test_render():

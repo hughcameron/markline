@@ -4,6 +4,7 @@ import copy
 import importlib.util
 import re
 from builtins import slice
+from collections import Counter
 from datetime import datetime
 from typing import Callable, List, NamedTuple, Union
 
@@ -19,6 +20,8 @@ class Locator(NamedTuple):
     attrs: dict = {}
     recursive: bool = True
     limit: int = None
+
+    __str__ = lambda self: f"<{self.name}>{self.attrs if self.attrs else ''}"
 
 
 loc = Locator
@@ -340,7 +343,7 @@ class Markup:
         response = requests.get(url, self.headers)
         return BeautifulSoup(response.content, parser)
 
-    def gather_meta(self) -> dict:
+    def gather_meta(self, counts: bool = False) -> dict:
         """Extract metadata from the <meta> tags within HTML content.
         Some metadata is extracted as arrays, e.g. article:tag, where
         multiple <meta> tags with the same property are present on the page.
@@ -350,10 +353,16 @@ class Markup:
         Some publishers will have a distinct <meta> schema that includes meta arrays.
         To account for this, the meta_arrays argument can be passed to the Markup class.
 
+        Args:
+            counts (bool, optional): Whether to return counts of the meta keys found.
+                Defaults to False.
+
         Returns:
             dict: Metadata store.
+                When counts is True, a dict of counts of meta elements keys is returned.
         """
         meta = {}
+        meta_keys = []
         for tag in self.original.find_all("meta"):
             key_terms = ["property", "name"]
             key_terms += [k for k in tag.attrs.keys() if k != "content"]
@@ -363,6 +372,9 @@ class Markup:
                 meta[key] = meta.get(key, []) + [value]
             else:
                 meta[key] = value
+            meta_keys.append(key)
+        if counts:
+            return dict(Counter(meta_keys).most_common())
         return meta
 
     def set_properties(self):
@@ -420,8 +432,7 @@ class Markup:
 
     def filter(self, loc: Locator) -> None:
         """Filter HTML elements.
-        Use filter() or the 'filter' step in a pipeline to
-        remove elements from the draft.
+        Use filter() to remove elements from the draft.
 
         The filter() method accepts a single locator and
         removes all non-matching elements from the draft.
@@ -433,19 +444,36 @@ class Markup:
 
     def drop(self, *locations: Locator) -> None:
         """Drop HTML elements.
-        Use drop() or the 'drop' step in a pipeline to
-        remove elements from the draft.
+        Use drop() to remove elements from the draft.
 
         While the filter() method is used to remove non-matching elements,
         the drop() method is used to remove matching elements from the draft.
 
         Args:
-            loc (Locator): Locator or list of locators of
-                matching elements to drop.
+            loc (Locator): One or more Locators of matching elements to drop.
         """
         for loc in locations:
             for result in self.draft.find_all(*loc):
                 result.decompose()
+
+    def counts(self, *locations: Locator) -> dict:
+        """Count of HTML elements.
+        Calculates a dict of counts of matching elements, grouped by the Locator used.
+
+        Note that where multiple Locators of elements are provided this is not a
+        deduplicated count of elements, as Locators can match overlapping elements.
+
+        Args:
+            loc (Locator): One or more Locators to count matching elements.
+
+        Returns:
+            dict: Count of matching elements dropped.
+        """
+        loc_count = []
+        for loc in locations:
+            for _ in self.draft.find_all(*loc):
+                loc_count.append(str(loc))
+        return dict(Counter(loc_count).most_common())
 
     def render(
         self,
