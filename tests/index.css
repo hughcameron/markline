@@ -55,7 +55,7 @@ aside {
 
 /* only show side navigation on non-mobile phones */
 @media only screen and (min-width: 768px) {
-	main {
+	article {
 		margin-left: 9.5em;
 	}
 
