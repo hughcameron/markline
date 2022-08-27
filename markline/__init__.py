@@ -385,7 +385,7 @@ class Markup:
             properties (dict): Default properties to store.
         """
         return {
-            "title": coalesce(self.meta.get("og:title"), self.original.title.string),
+            "headline": coalesce(self.meta.get("og:title"), self.original.title.string),
             "url": self.url,
             "description": self.meta.get("og:description"),
             "publisher": self.meta.get("og:site_name"),
@@ -555,6 +555,21 @@ class Markup:
         return self.draft.prettify()
 
     def to_md(self, filepath: str = None) -> str:
+        """Render the draft as Markdown.
+        Accepts the default input and output formats for the render() method.
+        If a filepath is provided, the markdown content is written to the file.
+
+        Returns:
+            str: Markdown content.
+            filepath (str, optional): Filepath to write HTML content to.
+                Defaults to None.
+        """
+        if filepath:
+            with open(filepath, "w") as f:
+                return f.write(self.render())
+        return self.render()
+
+    def to_logseq(self, filepath: str = None) -> str:
         """Render the draft as Markdown.
         Accepts the default input and output formats for the render() method.
         If a filepath is provided, the markdown content is written to the file.
