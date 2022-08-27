@@ -120,17 +120,17 @@ def test_quote_caption():
         "<blockquote>\n A takeaway coffee with the morning news.\n</blockquote>\n"
     )
     ml.quote_caption(remote_html.draft.find("figure"))
-    soup_result = remote_html.draft.find("blockquote").prettify()
+    soup_result = remote_html.filter("blockquote").to_html()
     remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
 
 
 def test_fetch_url_content():
-    assert remote_html.original.prettify() == soup_html.prettify()
+    assert remote_html.to_html() == soup_html.prettify()
 
 
 def test_fetch_local_content():
-    assert local_html.original.prettify() == soup_html.prettify()
+    assert local_html.to_html() == soup_html.prettify()
 
 
 def test_gather_meta():
@@ -223,7 +223,7 @@ def test_edit():
     """
     expected = "<strong>\n By Webber Page\n</strong>\n"
     remote_html.edit(add_byline)
-    soup_result = remote_html.draft.find("strong").prettify()
+    soup_result = remote_html.filter("strong").to_html()
     remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
 
@@ -234,7 +234,18 @@ def test_apply():
         "<blockquote>\n A takeaway coffee with the morning news.\n</blockquote>\n"
     )
     remote_html.apply(ml.quote_caption, ml.loc(name="figure"))
-    soup_result = remote_html.draft.find("blockquote").prettify()
+    soup_result = remote_html.filter("blockquote").to_html()
+    remote_html.draft = copy(remote_html.original)
+    assert soup_result == expected
+
+
+def test_apply_str():
+    """Test the apply method with a string locator."""
+    expected = (
+        "<blockquote>\n A takeaway coffee with the morning news.\n</blockquote>\n"
+    )
+    remote_html.apply(ml.quote_caption, "figure")
+    soup_result = remote_html.filter("blockquote").to_html()
     remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
 
@@ -246,8 +257,19 @@ def test_filter():
     expected = (
         "<figcaption>\n A takeaway coffee with the morning news.\n</figcaption>\n"
     )
-    remote_html.filter(ml.loc("figcaption"))
-    soup_result = remote_html.draft.prettify()
+    soup_result = remote_html.filter(ml.loc("figcaption")).to_html()
+    remote_html.draft = copy(remote_html.original)
+    assert soup_result == expected
+
+
+def test_filter_str():
+    """Test the filter method with a string locator.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
+    """
+    expected = (
+        "<figcaption>\n A takeaway coffee with the morning news.\n</figcaption>\n"
+    )
+    soup_result = remote_html.filter("figcaption").to_html()
     remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
 
@@ -258,9 +280,48 @@ def test_drop():
     """
     expected = '<article>\n <h1 id="tips-for-writing-a-news-article">\n  Tips for writing a news article\n </h1>\n</article>\n'
     remote_html.drop(ml.loc("figure"), ml.loc("section"), ml.loc("p"), ml.loc("hr"))
-    soup_result = remote_html.draft.find("article").prettify()
+    soup_result = remote_html.filter(ml.loc("article")).to_html()
     remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
+
+
+def test_drop_str():
+    """Test the filter method with a string locator.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
+    """
+    expected = '<article>\n <h1 id="tips-for-writing-a-news-article">\n  Tips for writing a news article\n </h1>\n</article>\n'
+    remote_html.drop("figure", "section", "p", "hr")
+    soup_result = remote_html.filter("article").to_html()
+    remote_html.draft = copy(remote_html.original)
+    assert soup_result == expected
+
+
+def test_prepend():
+    """Test the prepend method.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
+    """
+    excepted = (
+        "<p>\n test\n <title>\n  Tips for writing a news article\n </title>\n</p>"
+    )
+    remote_html.filter("title")
+    remote_html.prepend(ml.new_tag("p", literal="test"))
+    soup_result = remote_html.to_html()
+    remote_html.draft = copy(remote_html.original)
+    assert soup_result == excepted
+
+
+def test_append():
+    """Test the append method.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
+    """
+    excepted = (
+        "<title>\n Tips for writing a news article\n <p>\n  test\n </p>\n</title>\n"
+    )
+    remote_html.filter("title")
+    remote_html.append(ml.new_tag("p", literal="test"))
+    soup_result = remote_html.to_html()
+    remote_html.draft = copy(remote_html.original)
+    assert soup_result == excepted
 
 
 def test_counts():

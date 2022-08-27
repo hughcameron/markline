@@ -409,8 +409,9 @@ class Markup:
         """
         assert callable(editor), "Editor must be a callable."
         editor(self)
+        return self
 
-    def apply(self, editor: Callable, *locations: Locator) -> None:
+    def apply(self, editor: Callable, *locations: Locator | str) -> None:
         """Apply an `editor` function to HTML elements.
         Use apply() edit elements matching a specified location within the draft.
         The editor function should accept a bs4.element.Tag object.
@@ -420,15 +421,18 @@ class Markup:
 
         Args:
             editor (Callable): Function to apply to matching elements from the draft.
-            loc (Locator): Locator or list of locators of
+            loc (Locator | str): Locator or list of locators of
                 matching elements to apply changes.
         """
         assert callable(editor), "Editor must be a callable."
         for loc in locations:
+            if isinstance(loc, str):
+                loc = Locator(loc)
             for result in self.draft.find_all(*loc):
                 editor(result)
+        return self
 
-    def filter(self, loc: Locator) -> None:
+    def filter(self, loc: Locator | str) -> None:
         """Filter HTML elements.
         Use filter() to reduce the draft to matching elements.
 
@@ -436,11 +440,14 @@ class Markup:
         removes all non-matching elements from the draft.
 
         Args:
-            loc (Locator): Locator of matching elements to inlcude.
+            loc (Locator | str): Locator of matching elements to inlcude.
         """
+        if isinstance(loc, str):
+            loc = Locator(loc)
         self.draft = self.draft.find(*loc)
+        return self
 
-    def drop(self, *locations: Locator) -> None:
+    def drop(self, *locations: Locator | str) -> None:
         """Drop HTML elements.
         Use drop() to remove elements from the draft.
 
@@ -448,11 +455,36 @@ class Markup:
         the drop() method is used to remove matching elements from the draft.
 
         Args:
-            loc (Locator): One or more Locators of matching elements to drop.
+            loc (Locator | str): One or more Locators of matching elements to drop.
         """
         for loc in locations:
+            if isinstance(loc, str):
+                loc = Locator(loc)
             for result in self.draft.find_all(*loc):
                 result.decompose()
+        return self
+
+    def prepend(self, *elements: element.Tag) -> None:
+        """Prepend HTML elements to the draft.
+
+        Args:
+            elements (element.Tag): One or more elements to prepend to the draft.
+        """
+        collect, *fill = (*elements, self.draft)
+        for elem in fill:
+            collect.append(elem)
+        self.draft = collect
+        return self
+
+    def append(self, *elements: element.Tag) -> None:
+        """Append HTML elements to the draft.
+
+        Args:
+            elements (element.Tag): One or more elements to append to the draft.
+        """
+        for elem in elements:
+            self.draft.append(elem)
+        return self
 
     def counts(self, *locations: Locator) -> dict:
         """Count of HTML elements.
