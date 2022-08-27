@@ -566,7 +566,7 @@ class Markup:
         """
         if filepath:
             with open(filepath, "w") as f:
-                return f.write(self.render())
+                f.write(self.render())
         return self.render()
 
     def to_logseq(self, filepath: str = None) -> str:
@@ -579,7 +579,16 @@ class Markup:
             filepath (str, optional): Filepath to write HTML content to.
                 Defaults to None.
         """
+
+        properties_block = ""
+        for key, value in self.properties.items():
+            if isinstance(value, list):
+                value = ", ".join(value)
+            properties_block += f"{key}:: {str(value)}\n"
+
+        page = properties_block + self.to_md()
+
         if filepath:
             with open(filepath, "w") as f:
-                return f.write(self.render())
-        return self.render()
+                f.write(page)
+        return page

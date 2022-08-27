@@ -192,7 +192,7 @@ def test_gather_meta_counts():
 def test_set_properties():
     """Test the set_properties function."""
     expected = {
-        "title": "Tips for writing a news article",
+        "headline": "Tips for writing a news article",
         "url": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html",
         "description": "Learn how to publish articles in HTML5",
         "publisher": "Webber Publishing",
@@ -205,7 +205,7 @@ def test_add_properties():
     remote_html.properties is reset to ensure the test suite remains idempotent.
     """
     expected = {
-        "title": "Tips for writing a news article",
+        "headline": "Tips for writing a news article",
         "url": "https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html",
         "description": "Learn how to publish articles in HTML5",
         "publisher": "Webber Publishing",
@@ -377,3 +377,12 @@ def test_to_html():
 def test_to_md():
     """Test the to_md method."""
     remote_html.to_md() == local_md
+
+
+def test_to_logseq():
+    """Test the to_logseq method."""
+    expected = "headline:: Tips for writing a news article\nurl:: https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html\ndescription:: Learn how to publish articles in HTML5\npublisher:: Webber Publishing\nTips for writing a news article\n"
+    remote_html.filter("title")
+    soup_result = remote_html.to_logseq()
+    remote_html.draft = copy(remote_html.original)
+    assert soup_result == expected
