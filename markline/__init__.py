@@ -352,7 +352,7 @@ def quote_caption(figure: element.Tag):
     ```
 
     Args:
-        figure (element.Tag): An HTML figure tag.
+        figure (element.Tag): An HTML figure or figcaption tag.
     """
     quote = new_tag("blockquote", figure.text)
     figure.insert_after(quote)
@@ -528,21 +528,27 @@ class Markup:
     def select_all(
         self,
         loc: CSSLocator | TagLocator | str,
+        attr_value: str = None,
         version: str = "draft",
     ) -> element.ResultSet:
         """Select elements from the HTML content using a locator.
         Args:
             loc (CSSLocator | TagLocator | str): locator to select.
+            attr_value (str, optional): Value of the attribute to retrieve from each element.
+                Defaults to None.
             version (str, optional): Version of the HTML content to select from. Defaults to "draft".
         Returns:
             element.ResultSet: ResultSet of elements from query.
         """
         markup = getattr(self, version)
         if isinstance(loc, TagLocator):
-            return markup.find_all(*loc)
+            results = markup.find_all(*loc)
         if isinstance(loc, str):
             loc = CSSLocator(loc)
-        return markup.select(*loc)
+        results = markup.select(*loc)
+        if attr_value:
+            return [r.attrs.get(attr_value) for r in results]
+        return results
 
     def edit(self, editor: Callable) -> None:
         """Edit the HTML content with an editor function.

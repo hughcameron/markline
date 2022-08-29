@@ -243,14 +243,20 @@ def test_properties_block():
 
 
 def test_select():
-    expected = 9
-    soup_result = len(remote_html.select_all("li"))
+    expected = '<aside class="sidenav">\n <a href="#the-headline">\n  The Headline\n </a>\n <a href="#the-lead">\n  The Lead\n </a>\n <a href="#the-body">\n  The Body\n </a>\n</aside>\n'
+    soup_result = remote_html.select("aside").prettify()
     assert soup_result == expected
 
 
-def test_select_first():
-    expected = '<aside class="sidenav">\n <a href="#the-headline">\n  The Headline\n </a>\n <a href="#the-lead">\n  The Lead\n </a>\n <a href="#the-body">\n  The Body\n </a>\n</aside>\n'
-    soup_result = remote_html.select("aside").prettify()
+def test_select_all():
+    expected = 3
+    soup_result = len(remote_html.select_all("section"))
+    assert soup_result == expected
+
+
+def test_select_all_attr():
+    expected = ["the-headline", "the-lead", "the-body"]
+    soup_result = remote_html.select_all("section", attr_value="id")
     assert soup_result == expected
 
 
