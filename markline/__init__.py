@@ -6,6 +6,7 @@ import re
 from builtins import slice
 from collections import Counter
 from datetime import datetime
+from select import select
 from typing import Callable, List, NamedTuple, Union
 
 import pandoc
@@ -13,17 +14,6 @@ import pytz
 import requests
 from bs4 import BeautifulSoup, element
 from furl import furl
-
-
-class Locator(NamedTuple):
-    name: str
-    attrs: dict = {}
-    recursive: bool = True
-    limit: int = None
-
-
-loc = Locator
-
 
 DEFAULT_META_ARRAYS = [
     "article:author",
@@ -38,6 +28,93 @@ DEFAULT_META_ARRAYS = [
     "video:tag",
     "video:writer",
 ]
+
+
+class TagLocator(NamedTuple):
+    """TagLocator defines a the interface for the BeautifulSoup find_* query methods.
+    This class is intended for type hinting and usually invoked by the `loc` function.
+
+    The find* methods are used to locate a single element in a BeautifulSoup
+    Look in the children of this PageElement and find PageElements that match
+    the given criteria.
+    Query methods include `find`, `find_all`, `find_all_next`, `find_all_previous`,
+    `find_next`, `find_next_sibling`, `find_next_siblings`, `find_parent`,
+    `find_parents`, `find_previous` and `find_previous_sibling`.
+
+    Args:
+        name (str, optional) : A filter on tag name.
+        attrs (dict, optional) : A dictionary of filters on attribute values.
+        recursive (bool, optional) : If this is True, the Find query will perform a
+                recursive search of this PageElement's children. Otherwise,
+                only the direct children will be considered.
+        limit (int, optional) : Stop looking after finding this many results.
+    """
+
+    name: str = None
+    attrs: dict = {}
+    recursive: bool = True
+    limit: int = None
+
+
+class CSSLocator(NamedTuple):
+    """CSSLocator defines a single interface for the BeautifulSoup select query methods.
+    This class is intended for type hinting and usually invoked by the `loc` function.
+
+    Select
+    Perform a CSS selection operation on the current element using the SoupSieve library.
+    Query methods include `select` and `select_one`.
+
+    Args:
+        selector (str, optional) : A string containing a CSS selector.
+        namespaces (dict, optional) : A dictionary mapping namespace prefixes.
+        limit (int, optional) : Stop looking after finding this many results.
+    """
+
+    selector: str = None
+    namespaces: dict = {}
+    limit: int = None
+
+
+def loc(
+    name_selector: str,
+    attrs: dict = {},
+    recursive: bool = True,
+    namespaces: dict = {},
+    limit: int = None,
+) -> dict:
+    """Determines the query method and arguments for a BeautifulSoup query.
+
+    If the `attrs` or `recursive` arguments are provided then keyword arguments for
+    a Find method is returned. Otherwise, a Select method is returned.
+
+    Args:
+        name_selector (str) : A filter on tag name or a string containing a CSS selector.
+                This is a required argument and the value may be used in both
+                Find and Select methods.
+        attrs (dict, optional) : A dictionary of filters on attribute values.
+                This argument is only used in Find methods.
+        recursive (bool, optional) : If this is True, the Find query will perform a
+                recursive search of this PageElement's children. Otherwise,
+                only the direct children will be considered.
+                This argument is only used in Find methods.
+        namespaces (dict, optional) : A dictionary mapping namespace prefixes.
+                This argument is only used in Select methods.
+        limit (int, optional) : Stop looking after finding this many results.
+                This argument is used in both Find and Select methods.
+
+    Returns:
+        dict: A dictionay of keyword arguments for the BeautifulSoup query.
+    """
+    if all((any((attrs, recursive)), namespaces)):
+        raise ValueError(
+            "Cannot use `attrs` or `recursive` arguments together with `namespaces`."
+        )
+    if attrs:
+        return TagLocator(
+            name=name_selector, attrs=attrs, recursive=recursive, limit=limit
+        )
+    else:
+        return CSSLocator(selector=name_selector, namespaces=namespaces, limit=limit)
 
 
 def package_available(package_name: str) -> bool:
@@ -228,6 +305,24 @@ def new_tag(tag: str, literal: str = None, attrs: dict = {}) -> element.Tag:
     return tag
 
 
+def new_token(token: str) -> element.Tag:
+    """Create a new token tag.
+    Token tags are used to mark content that should not be modified
+    with the markdown render.
+
+    Args:
+        token (str): _description_
+
+    Returns:
+         -> element.Tag: HTML element with token content in a <pre><code> tag.
+    """
+    token_tag = new_tag("div")
+    code = new_tag("pre")
+    code.append(new_tag("code", token))
+    token_tag.append(code)
+    return token_tag
+
+
 def quote_caption(figure: element.Tag):
     """A convenience function to include a copy an image caption
     below the image as a quote within markdown.
@@ -386,9 +481,9 @@ class Markup:
         """
         return {
             "headline": coalesce(self.meta.get("og:title"), self.original.title.string),
-            "url": self.url,
             "description": self.meta.get("og:description"),
             "publisher": self.meta.get("og:site_name"),
+            "url": self.url,
         }
 
     def add_properties(self, properties: dict) -> None:
@@ -398,6 +493,56 @@ class Markup:
             properties (dict): Properties to add.
         """
         self.properties.update(properties)
+
+    def properties_block(self) -> str:
+        properties_block = ""
+        for key, value in self.properties.items():
+            if isinstance(value, str) and ", " in value:
+                value = f'"{value}"'
+            if isinstance(value, list):
+                value = ", ".join(value)
+            if isinstance(value, object):
+                value = str(value)
+            properties_block += f"{key}:: {str(value)}\n"
+        return properties_block
+
+    def select(
+        self,
+        loc: CSSLocator | TagLocator | str,
+        version: str = "draft",
+    ) -> element.ResultSet:
+        """Select the first element from the HTML content using a locator.
+        Args:
+            loc (CSSLocator | TagLocator | str): locator to select.
+            version (str, optional): Version of the HTML content to select from. Defaults to "draft".
+        Returns:
+            element.ResultSet: ResultSet of elements from query.
+        """
+        markup = getattr(self, version)
+        if isinstance(loc, TagLocator):
+            return markup.find(*loc)
+        if isinstance(loc, str):
+            loc = CSSLocator(loc)
+        return markup.select_one(selector=loc.selector, namespaces=loc.namespaces)
+
+    def select_all(
+        self,
+        loc: CSSLocator | TagLocator | str,
+        version: str = "draft",
+    ) -> element.ResultSet:
+        """Select elements from the HTML content using a locator.
+        Args:
+            loc (CSSLocator | TagLocator | str): locator to select.
+            version (str, optional): Version of the HTML content to select from. Defaults to "draft".
+        Returns:
+            element.ResultSet: ResultSet of elements from query.
+        """
+        markup = getattr(self, version)
+        if isinstance(loc, TagLocator):
+            return markup.find_all(*loc)
+        if isinstance(loc, str):
+            loc = CSSLocator(loc)
+        return markup.select(*loc)
 
     def edit(self, editor: Callable) -> None:
         """Edit the HTML content with an editor function.
@@ -411,7 +556,11 @@ class Markup:
         editor(self)
         return self
 
-    def apply(self, editor: Callable, *locations: Locator | str) -> None:
+    def apply(
+        self,
+        editor: Callable,
+        *locations: CSSLocator | TagLocator | str,
+    ) -> None:
         """Apply an `editor` function to HTML elements.
         Use apply() edit elements matching a specified location within the draft.
         The editor function should accept a bs4.element.Tag object.
@@ -421,18 +570,16 @@ class Markup:
 
         Args:
             editor (Callable): Function to apply to matching elements from the draft.
-            loc (Locator | str): Locator or list of locators of
+            loc (CSSLocator | TagLocator | str): locator or list of locators of
                 matching elements to apply changes.
         """
         assert callable(editor), "Editor must be a callable."
         for loc in locations:
-            if isinstance(loc, str):
-                loc = Locator(loc)
-            for result in self.draft.find_all(*loc):
+            for result in self.select_all(loc):
                 editor(result)
         return self
 
-    def filter(self, loc: Locator | str) -> None:
+    def filter(self, loc: CSSLocator | TagLocator | str) -> None:
         """Filter HTML elements.
         Use filter() to reduce the draft to matching elements.
 
@@ -440,14 +587,12 @@ class Markup:
         removes all non-matching elements from the draft.
 
         Args:
-            loc (Locator | str): Locator of matching elements to inlcude.
+            loc (CSSLocator | TagLocator | str): locator of matching elements to inlcude.
         """
-        if isinstance(loc, str):
-            loc = Locator(loc)
-        self.draft = self.draft.find(*loc)
+        self.draft = self.select(loc)
         return self
 
-    def drop(self, *locations: Locator | str) -> None:
+    def drop(self, *locations: CSSLocator | TagLocator | str) -> None:
         """Drop HTML elements.
         Use drop() to remove elements from the draft.
 
@@ -455,12 +600,10 @@ class Markup:
         the drop() method is used to remove matching elements from the draft.
 
         Args:
-            loc (Locator | str): One or more Locators of matching elements to drop.
+            loc (CSSLocator | TagLocator | str): One or more locators of matching elements to drop.
         """
         for loc in locations:
-            if isinstance(loc, str):
-                loc = Locator(loc)
-            for result in self.draft.find_all(*loc):
+            for result in self.select_all(loc):
                 result.decompose()
         return self
 
@@ -470,7 +613,8 @@ class Markup:
         Args:
             elements (element.Tag): One or more elements to prepend to the draft.
         """
-        collect, *fill = (*elements, self.draft)
+        collect = new_tag("div")
+        fill = (*elements, self.draft)
         for elem in fill:
             collect.append(elem)
         self.draft = collect
@@ -486,15 +630,15 @@ class Markup:
             self.draft.append(elem)
         return self
 
-    def counts(self, *locations: Locator) -> dict:
+    def counts(self, *locations: CSSLocator | TagLocator | str) -> dict:
         """Count of HTML elements.
-        Calculates a dict of counts of matching elements, grouped by the Locator used.
+        Calculates a dict of counts of matching elements, grouped by the locator used.
 
-        Note that where multiple Locators of elements are provided this is not a
-        deduplicated count of elements, as Locators can match overlapping elements.
+        Note that where multiple locators of elements are provided this is not a
+        deduplicated count of elements, as locators can match overlapping elements.
 
         Args:
-            loc (Locator): One or more Locators to count matching elements.
+            loc (CSSLocator | TagLocator | str): One or more locators to count matching elements.
 
         Returns:
             dict: Count of matching elements dropped.
@@ -503,7 +647,7 @@ class Markup:
         if locations:
             for loc in locations:
                 loc_count[str(loc)] = 0
-                for _ in self.draft.find_all(*loc):
+                for _ in self.select_all(loc):
                     loc_count[str(loc)] += 1
             return dict(loc_count.most_common())
         else:
@@ -566,29 +710,5 @@ class Markup:
         """
         if filepath:
             with open(filepath, "w") as f:
-                f.write(self.render())
+                return f.write(self.render())
         return self.render()
-
-    def to_logseq(self, filepath: str = None) -> str:
-        """Render the draft as Markdown.
-        Accepts the default input and output formats for the render() method.
-        If a filepath is provided, the markdown content is written to the file.
-
-        Returns:
-            str: Markdown content.
-            filepath (str, optional): Filepath to write HTML content to.
-                Defaults to None.
-        """
-
-        properties_block = ""
-        for key, value in self.properties.items():
-            if isinstance(value, list):
-                value = ", ".join(value)
-            properties_block += f"{key}:: {str(value)}\n"
-
-        page = properties_block + self.to_md()
-
-        if filepath:
-            with open(filepath, "w") as f:
-                f.write(page)
-        return page

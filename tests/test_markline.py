@@ -1,5 +1,6 @@
 from copy import copy
 from datetime import datetime, timezone
+from unittest import result
 
 import markline as ml
 from bs4 import BeautifulSoup
@@ -125,6 +126,25 @@ def test_quote_caption():
     assert soup_result == expected
 
 
+def test_loc():
+    expected = ml.CSSLocator
+    result = type(ml.loc("div"))
+    assert result == expected
+
+
+def test_loc_attrs():
+    expected = ml.TagLocator
+    result = type(ml.loc("div", attrs={"class": "test"}))
+    assert result == expected
+
+
+def test_new_token():
+    """Test the new_token function."""
+    expected = "<div>\n <pre><code>[[test]]</code></pre>\n</div>"
+    test_token = ml.new_token("[[test]]").prettify()
+    assert test_token == expected
+
+
 def test_fetch_url_content():
     assert remote_html.to_html() == soup_html.prettify()
 
@@ -217,6 +237,23 @@ def test_add_properties():
     assert update_result == expected
 
 
+def test_properties_block():
+    expected = "headline:: Tips for writing a news article\ndescription:: Learn how to publish articles in HTML5\npublisher:: Webber Publishing\nurl:: https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html\n"
+    assert remote_html.properties_block() == expected
+
+
+def test_select():
+    expected = 9
+    soup_result = len(remote_html.select_all("li"))
+    assert soup_result == expected
+
+
+def test_select_first():
+    expected = '<aside class="sidenav">\n <a href="#the-headline">\n  The Headline\n </a>\n <a href="#the-lead">\n  The Lead\n </a>\n <a href="#the-body">\n  The Body\n </a>\n</aside>\n'
+    soup_result = remote_html.select("aside").prettify()
+    assert soup_result == expected
+
+
 def test_edit():
     """Test the edit method.
     remote_html.draft is reset to ensure the test suite remains idempotent.
@@ -233,7 +270,7 @@ def test_apply():
     expected = (
         "<blockquote>\n A takeaway coffee with the morning news.\n</blockquote>\n"
     )
-    remote_html.apply(ml.quote_caption, ml.loc(name="figure"))
+    remote_html.apply(ml.quote_caption, ml.loc("figure"))
     soup_result = remote_html.filter("blockquote").to_html()
     remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
@@ -275,7 +312,7 @@ def test_filter_str():
 
 
 def test_drop():
-    """Test the filter method.
+    """Test the drop method.
     remote_html.draft is reset to ensure the test suite remains idempotent.
     """
     expected = '<article>\n <h1 id="tips-for-writing-a-news-article">\n  Tips for writing a news article\n </h1>\n</article>\n'
@@ -300,12 +337,11 @@ def test_prepend():
     """Test the prepend method.
     remote_html.draft is reset to ensure the test suite remains idempotent.
     """
-    excepted = (
-        "<p>\n test\n <title>\n  Tips for writing a news article\n </title>\n</p>"
-    )
+    excepted = "<div>\n <p>\n  test\n </p>\n <title>\n  Tips for writing a news article\n </title>\n</div>"
     remote_html.filter("title")
     remote_html.prepend(ml.new_tag("p", literal="test"))
     soup_result = remote_html.to_html()
+    # print(soup_result)
     remote_html.draft = copy(remote_html.original)
     assert soup_result == excepted
 
@@ -326,16 +362,14 @@ def test_append():
 
 def test_counts():
     """Test the counts method."""
-    expected = {"Locator(name='meta', attrs={}, recursive=True, limit=None)": 22}
-    assert remote_html.counts(ml.loc(name="meta")) == expected
+    expected = {"CSSLocator(selector='meta', namespaces={}, limit=None)": 22}
+    assert remote_html.counts(ml.loc("meta")) == expected
 
 
 def test_counts_tag_not_present():
     """Test the counts method."""
-    expected = {
-        "Locator(name='tag_not_present', attrs={}, recursive=True, limit=None)": 0
-    }
-    assert remote_html.counts(ml.loc(name="tag_not_present")) == expected
+    expected = {"CSSLocator(selector='tag_not_present', namespaces={}, limit=None)": 0}
+    assert remote_html.counts(ml.loc("tag_not_present")) == expected
 
 
 def test_counts_all_elements():
@@ -377,12 +411,3 @@ def test_to_html():
 def test_to_md():
     """Test the to_md method."""
     remote_html.to_md() == local_md
-
-
-def test_to_logseq():
-    """Test the to_logseq method."""
-    expected = "headline:: Tips for writing a news article\nurl:: https://raw.githubusercontent.com/hughcameron/markline/main/tests/test.html\ndescription:: Learn how to publish articles in HTML5\npublisher:: Webber Publishing\nTips for writing a news article\n"
-    remote_html.filter("title")
-    soup_result = remote_html.to_logseq()
-    remote_html.draft = copy(remote_html.original)
-    assert soup_result == expected
