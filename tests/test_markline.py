@@ -248,6 +248,12 @@ def test_select():
     assert soup_result == expected
 
 
+def test_select_attr():
+    expected = ["sidenav"]
+    soup_result = remote_html.select("aside", attr_value="class")
+    assert soup_result == expected
+
+
 def test_select_all():
     expected = 3
     soup_result = len(remote_html.select_all("section"))

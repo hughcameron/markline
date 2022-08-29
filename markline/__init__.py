@@ -109,7 +109,7 @@ def loc(
         raise ValueError(
             "Cannot use `attrs` or `recursive` arguments together with `namespaces`."
         )
-    if attrs:
+    if attrs or recursive is False:
         return TagLocator(
             name=name_selector, attrs=attrs, recursive=recursive, limit=limit
         )
@@ -509,33 +509,39 @@ class Markup:
     def select(
         self,
         loc: CSSLocator | TagLocator | str,
+        attr_value: str = None,
         version: str = "draft",
-    ) -> element.ResultSet:
+    ) -> element.Tag:
         """Select the first element from the HTML content using a locator.
         Args:
             loc (CSSLocator | TagLocator | str): locator to select.
+            attr_value (str, optional): Name of the element attribute from which to retrieve a value.
+                If provided, only the value of the attribute is returned. Defaults to None.
             version (str, optional): Version of the HTML content to select from. Defaults to "draft".
         Returns:
-            element.ResultSet: ResultSet of elements from query.
+            element.Tag: Element from query.
         """
         markup = getattr(self, version)
         if isinstance(loc, TagLocator):
-            return markup.find(*loc)
+            result = markup.find(*loc)
         if isinstance(loc, str):
             loc = CSSLocator(loc)
-        return markup.select_one(selector=loc.selector, namespaces=loc.namespaces)
+        result = markup.select_one(selector=loc.selector, namespaces=loc.namespaces)
+        if attr_value:
+            return result.attrs.get(attr_value)
+        return result
 
     def select_all(
         self,
         loc: CSSLocator | TagLocator | str,
         attr_value: str = None,
         version: str = "draft",
-    ) -> element.ResultSet:
+    ) -> element.ResultSet | list:
         """Select elements from the HTML content using a locator.
         Args:
             loc (CSSLocator | TagLocator | str): locator to select.
-            attr_value (str, optional): Value of the attribute to retrieve from each element.
-                Defaults to None.
+            attr_value (str, optional): Name of the element attribute from which to retrieve a value.
+                If provided, a value is returned from each element. Defaults to None.
             version (str, optional): Version of the HTML content to select from. Defaults to "draft".
         Returns:
             element.ResultSet: ResultSet of elements from query.
