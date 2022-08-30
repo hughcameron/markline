@@ -106,7 +106,7 @@ def test_download_media():
     assert ml.download_media(IMG_URL) == "coffee.jpeg"
 
 
-def test_new_tag():
+def test_new_attr():
     """Test the new_tag function."""
     expected = '<p class="test">\n test\n</p>'
     test_tag = ml.new_tag("p", literal="test", attrs={"class": "test"}).prettify()
@@ -250,7 +250,13 @@ def test_select():
 
 def test_select_attr():
     expected = ["sidenav"]
-    soup_result = remote_html.select("aside", attr_value="class")
+    soup_result = remote_html.select("aside", get_attr="class")
+    assert soup_result == expected
+
+
+def test_select_text():
+    expected = "Tips for writing a news article"
+    soup_result = remote_html.select("h1", get_text=True)
     assert soup_result == expected
 
 
@@ -262,7 +268,13 @@ def test_select_all():
 
 def test_select_all_attr():
     expected = ["the-headline", "the-lead", "the-body"]
-    soup_result = remote_html.select_all("section", attr_value="id")
+    soup_result = remote_html.select_all("section", get_attr="id")
+    assert soup_result == expected
+
+
+def test_select_all_text():
+    expected = ["The Headline", "The Lead", "The Body"]
+    soup_result = remote_html.select_all("h2", get_text=True)
     assert soup_result == expected
 
 
@@ -307,6 +319,19 @@ def test_filter():
         "<figcaption>\n A takeaway coffee with the morning news.\n</figcaption>\n"
     )
     soup_result = remote_html.filter(ml.loc("figcaption")).to_html()
+    remote_html.draft = copy(remote_html.original)
+    assert soup_result == expected
+
+
+def test_filter_attr():
+    """Test the filter method.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
+    """
+    expected = '<h1 id="tips-for-writing-a-news-article">\n Tips for writing a news article\n</h1>\n'
+    soup_result = remote_html.filter(
+        ml.loc("h1", attrs={"id": "tips-for-writing-a-news-article"})
+    ).to_html()
+    print(soup_result)
     remote_html.draft = copy(remote_html.original)
     assert soup_result == expected
 

@@ -279,6 +279,7 @@ def download_media(url: str, filename: str = None) -> str:
     if not filename:
         name = furl(url).path.segments[-1]
         media_type = response.headers.get("Content-Type").split("/")[1]
+        # TODO support extension aliases like "jpg" for "jpeg"
         if name.endswith("." + media_type):
             filename = name
         else:
@@ -488,6 +489,8 @@ class Markup:
 
     def add_properties(self, properties: dict) -> None:
         """Add properties to the properties store.
+        Lists are appended with a `,` to ensure that lists with
+        single values still appear as links in Logseq.
 
         Args:
             properties (dict): Properties to add.
@@ -500,7 +503,7 @@ class Markup:
             if isinstance(value, str) and ", " in value:
                 value = f'"{value}"'
             if isinstance(value, list):
-                value = ", ".join(value)
+                value = ", ".join(value) + ","
             if isinstance(value, object):
                 value = str(value)
             properties_block += f"{key}:: {str(value)}\n"
@@ -509,14 +512,16 @@ class Markup:
     def select(
         self,
         loc: CSSLocator | TagLocator | str,
-        attr_value: str = None,
+        get_attr: str = None,
+        get_text: bool = False,
         version: str = "draft",
     ) -> element.Tag:
         """Select the first element from the HTML content using a locator.
         Args:
             loc (CSSLocator | TagLocator | str): locator to select.
-            attr_value (str, optional): Name of the element attribute from which to retrieve a value.
+            get_attr (str, optional): Name of the element attribute from which to retrieve a value.
                 If provided, only the value of the attribute is returned. Defaults to None.
+            get_text (bool, optional): Whether to return the text of the selected element. Defaults to False.
             version (str, optional): Version of the HTML content to select from. Defaults to "draft".
         Returns:
             element.Tag: Element from query.
@@ -524,24 +529,30 @@ class Markup:
         markup = getattr(self, version)
         if isinstance(loc, TagLocator):
             result = markup.find(*loc)
+        if isinstance(loc, CSSLocator):
+            result = markup.select_one(selector=loc.selector, namespaces=loc.namespaces)
         if isinstance(loc, str):
             loc = CSSLocator(loc)
-        result = markup.select_one(selector=loc.selector, namespaces=loc.namespaces)
-        if attr_value:
-            return result.attrs.get(attr_value)
+            result = markup.select_one(selector=loc.selector, namespaces=loc.namespaces)
+        if get_attr:
+            return result.attrs.get(get_attr)
+        if get_text:
+            return result.text
         return result
 
     def select_all(
         self,
         loc: CSSLocator | TagLocator | str,
-        attr_value: str = None,
+        get_attr: str = None,
+        get_text: bool = False,
         version: str = "draft",
     ) -> element.ResultSet | list:
         """Select elements from the HTML content using a locator.
         Args:
             loc (CSSLocator | TagLocator | str): locator to select.
-            attr_value (str, optional): Name of the element attribute from which to retrieve a value.
+            get_attr (str, optional): Name of the element attribute from which to retrieve a value.
                 If provided, a value is returned from each element. Defaults to None.
+            get_text (bool, optional): Whether to return the text of each element. Defaults to False.
             version (str, optional): Version of the HTML content to select from. Defaults to "draft".
         Returns:
             element.ResultSet: ResultSet of elements from query.
@@ -549,11 +560,15 @@ class Markup:
         markup = getattr(self, version)
         if isinstance(loc, TagLocator):
             results = markup.find_all(*loc)
+        if isinstance(loc, CSSLocator):
+            results = markup.select(*loc)
         if isinstance(loc, str):
             loc = CSSLocator(loc)
-        results = markup.select(*loc)
-        if attr_value:
-            return [r.attrs.get(attr_value) for r in results]
+            results = markup.select(*loc)
+        if get_attr:
+            return [r.attrs.get(get_attr) for r in results]
+        if get_text:
+            return [r.text for r in results]    
         return results
 
     def edit(self, editor: Callable) -> None:
