@@ -537,7 +537,7 @@ class Markup:
         if get_attr:
             return result.attrs.get(get_attr)
         if get_text:
-            return result.text
+            return result.text.strip()
         return result
 
     def select_all(
@@ -568,7 +568,7 @@ class Markup:
         if get_attr:
             return [r.attrs.get(get_attr) for r in results]
         if get_text:
-            return [r.text for r in results]    
+            return [r.text.strip() for r in results]
         return results
 
     def edit(self, editor: Callable) -> None:
