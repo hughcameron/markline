@@ -568,7 +568,7 @@ class Markup:
         if get_attr:
             return [r.attrs.get(get_attr) for r in results]
         if get_text:
-            return [r.text.strip() for r in results]
+            return [r.text.strip() for r in results if r.text.strip()]
         return results
 
     def edit(self, editor: Callable) -> None:
