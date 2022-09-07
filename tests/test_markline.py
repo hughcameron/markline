@@ -452,9 +452,9 @@ def test_to_md():
 
 def test_to_md_newlines():
     """Test the to_md method with the newlines outlining style."""
-    remote_html.to_md(outliner="newlines") == local_md.replace("\n", "- \n")
+    remote_html.to_md(outliner="newlines") == local_md.replace("\n", "\n- ")
 
 
 def test_to_md_paragraphs():
     """Test the to_md method with the paragraphs outlining style."""
-    remote_html.to_md(outliner="paragraphs") == local_md.replace("\n\n", "- \n- \n")
+    remote_html.to_md(outliner="paragraphs") == local_md.replace("\n\n", "\n- \n- ")

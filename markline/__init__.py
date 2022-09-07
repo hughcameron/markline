@@ -333,7 +333,7 @@ def outline_newlines(markdown: str) -> str:
     Returns:
         str: Outlined markdown.
     """
-    return markdown.replace("\n", "- \n")
+    return markdown.replace("\n", "\n- ")
 
 
 def outline_paragraphs(markdown: str) -> str:
@@ -345,7 +345,7 @@ def outline_paragraphs(markdown: str) -> str:
     Returns:
         str: Outlined markdown.
     """
-    return markdown.replace("\n\n", "- \n- \n")
+    return markdown.replace("\n\n", "\n- \n- ")
 
 
 def quote_caption(figure: element.Tag):
@@ -752,7 +752,12 @@ class Markup:
     def to_md(self, filepath: str = None, outliner: str = None) -> str:
         """Render the draft as Markdown.
         Accepts the default input and output formats for the render() method.
+
         If a filepath is provided, the markdown content is written to the file.
+
+        If an outliner is provided, the markdown content is passed to the outliner
+        to generate an block outline suitable for use in Logseq. Currently only the
+        `newlines` and `paragraphs` outliners are supported.
 
         Returns:
             str: Markdown content.
