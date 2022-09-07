@@ -324,6 +324,30 @@ def new_token(token: str) -> element.Tag:
     return token_tag
 
 
+def outline_newlines(markdown: str) -> str:
+    """Add block points before all newlines in markdown.
+
+    Args:
+        markdown (str): Markdown to outline.
+
+    Returns:
+        str: Outlined markdown.
+    """
+    return markdown.replace("\n", "- \n")
+
+
+def outline_paragraphs(markdown: str) -> str:
+    """Separate paragraphs into block points within markdown.
+
+    Args:
+        markdown (str): Markdown to outline.
+
+    Returns:
+        str: Outlined markdown.
+    """
+    return markdown.replace("\n\n", "- \n- \n")
+
+
 def quote_caption(figure: element.Tag):
     """A convenience function to include a copy an image caption
     below the image as a quote within markdown.
@@ -725,7 +749,7 @@ class Markup:
                 return f.write(self.draft.prettify())
         return self.draft.prettify()
 
-    def to_md(self, filepath: str = None) -> str:
+    def to_md(self, filepath: str = None, outliner: str = None) -> str:
         """Render the draft as Markdown.
         Accepts the default input and output formats for the render() method.
         If a filepath is provided, the markdown content is written to the file.
@@ -734,8 +758,19 @@ class Markup:
             str: Markdown content.
             filepath (str, optional): Filepath to write HTML content to.
                 Defaults to None.
+            outliner (str, optional): A block outlining style.
         """
+        markdown = self.render()
+        outline_approach = {
+            "newlines": outline_newlines,
+            "paragraphs": outline_paragraphs,
+        }
+        if outliner:
+            assert (
+                outliner in outline_approach
+            ), f"Outliner must be one of {outline_approach.keys()}."
+            markdown = outline_approach[outliner](markdown)
         if filepath:
             with open(filepath, "w") as f:
-                return f.write(self.render())
-        return self.render()
+                return f.write(markdown)
+        return markdown
