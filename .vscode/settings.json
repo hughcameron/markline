@@ -3,5 +3,8 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-action.json": "file:///Users/hugh/github/hughcameron/markline/.github/workflows/main.yml"
+    }
 }
