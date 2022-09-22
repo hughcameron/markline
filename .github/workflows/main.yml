@@ -1,13 +1,20 @@
-name: Publish package to PyPI
+name: Release Package on PyPi
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
 jobs:
-  push_to_registry:
-    name: Push package
+  poetry-publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: actions/checkout@v2
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v3
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          python-version: "3.8"
+      - name: Publish to Pypi
+        env:
+          TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: poetry publish --build -u __token__ -p $TOKEN
