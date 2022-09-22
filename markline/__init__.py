@@ -1,4 +1,4 @@
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 import copy
 import importlib.util
@@ -9,9 +9,9 @@ from datetime import datetime
 from select import select
 from typing import Callable, List, NamedTuple, Union
 
+import httpx
 import pandoc
 import pytz
-import requests
 from bs4 import BeautifulSoup, element
 from furl import furl
 
@@ -138,19 +138,22 @@ def unshorten_url(url: str, headers: dict = {}) -> str:
     """Unshorten a URL by following redirects, useful for short
     URLs used in social media.
     A HEAD request is used to avoid downloading the entire page.
-    The requests session recycles connections across redirects.
+    The httpx session recycles connections across redirects.
 
     Args:
         url (str): A URL to unshorten.
-        headers (dict, optional): Headers for the requests session.
+        headers (dict, optional): Headers for the httpx session.
             Defaults to {}.
 
     Returns:
         str: URL of the final destination.
     """
-    session = requests.Session()
-    response = session.head(url, allow_redirects=True, headers=headers)
-    return response.url
+    client = httpx.Client()
+    request = client.build_request("GET", url)
+    while request is not None:
+        response = client.send(request)
+        request = response.next_request
+    return str(response.url)
 
 
 def trim_url(url: str) -> str:
@@ -177,7 +180,7 @@ def prepare_url(
         url (str): URL to prepare.
         unshorten (bool, optional): Unshorten the URL. Defaults to True.
         trim (bool, optional): Unshorten the URL. Defaults to True.
-        headers (dict, optional): Headers for the requests session.
+        headers (dict, optional): Headers for the httpx session.
             Defaults to {}.
 
     Returns:
@@ -274,8 +277,8 @@ def download_media(url: str, filename: str = None) -> str:
     Returns:
         str: filename of the downloaded file.
     """
-    response = requests.get(url)
-    assert response.ok, response.text
+    response = httpx.get(url)
+    assert response.status_code == 200, response.text
     if not filename:
         name = furl(url).path.segments[-1]
         media_type = response.headers.get("Content-Type").split("/")[1]
@@ -394,7 +397,7 @@ class Markup:
     url (str): URL to prepare and fetch content from.
     unshorten (bool, optional): Unshorten the URL. Defaults to True.
     trim (bool, optional): Unshorten the URL. Defaults to True.
-    headers (dict, optional): Headers for the requests session. Defaults to {}.
+    headers (dict, optional): Headers for the httpx session. Defaults to {}.
     meta_arrays (list, optional): List of meta tags to be converted to arrays. Defaults to None.
         See the gather_meta() docstring for more details on meta_arrays.
 
@@ -423,7 +426,8 @@ class Markup:
             self.url = filepath
         if url:
             self.headers = headers
-            self.url = prepare_url(url, unshorten, trim, self.headers)
+            url = prepare_url(url, unshorten, trim, self.headers)
+            self.url = url
         self.original = self.fetch_content(url=url, parser=parser, filepath=filepath)
         self.draft = copy.copy(self.original)
         self.meta_arrays = meta_arrays
@@ -458,7 +462,7 @@ class Markup:
         if filepath:
             with open(filepath, "r") as f:
                 return BeautifulSoup(f.read(), parser)
-        response = requests.get(url, self.headers)
+        response = httpx.get(url, headers=self.headers)
         return BeautifulSoup(response.content, parser)
 
     def gather_meta(self, counts: bool = False) -> dict:

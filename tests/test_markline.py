@@ -41,7 +41,7 @@ def add_byline(markup: ml.Markup):
 
 def test_version():
     """Ensure test suite is up to date with the latest version."""
-    assert ml.__version__ == "0.1.0"
+    assert ml.__version__ == "0.2.0"
 
 
 def test_package_available():
