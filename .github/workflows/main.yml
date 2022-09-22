@@ -1,4 +1,13 @@
-- name: Publish to PyPI
-  uses: pypa/gh-action-pypi-publish@release/v1
-  with:
-    password: ${{ secrets.PYPI_API_TOKEN }}
+name: Publish package to PyPI
+on:
+  release:
+    types: [published]
+jobs:
+  push_to_registry:
+    name: Push package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
