@@ -6,6 +6,7 @@ import re
 from builtins import slice
 from collections import Counter
 from datetime import datetime
+from html import unescape
 from select import select
 from typing import Callable, List, NamedTuple, Union
 
@@ -134,7 +135,7 @@ def package_available(package_name: str) -> bool:
     return True
 
 
-def unshorten_url(url: str, headers: dict = {}) -> str:
+def unshorten_url(url: str, client: httpx.Client = httpx.Client()) -> str:
     """Unshorten a URL by following redirects, useful for short
     URLs used in social media.
     A HEAD request is used to avoid downloading the entire page.
@@ -142,13 +143,12 @@ def unshorten_url(url: str, headers: dict = {}) -> str:
 
     Args:
         url (str): A URL to unshorten.
-        headers (dict, optional): Headers for the httpx session.
-            Defaults to {}.
+        client (httpx.Client, optional): httpx.Client for the session.
+            Defaults to httpx.Client().
 
     Returns:
         str: URL of the final destination.
     """
-    client = httpx.Client()
     request = client.build_request("GET", url)
     while request is not None:
         response = client.send(request)
@@ -172,7 +172,7 @@ def prepare_url(
     url: str,
     unshorten: bool = True,
     trim: bool = True,
-    headers: dict = {},
+    client: httpx.Client = httpx.Client(),
 ) -> str:
     """Prepare a URL for content extraction.
 
@@ -180,14 +180,14 @@ def prepare_url(
         url (str): URL to prepare.
         unshorten (bool, optional): Unshorten the URL. Defaults to True.
         trim (bool, optional): Unshorten the URL. Defaults to True.
-        headers (dict, optional): Headers for the httpx session.
-            Defaults to {}.
+        client (httpx.Client, optional): httpx.Client for the session.
+            Defaults to httpx.Client().
 
     Returns:
         str: Prepared URL.
     """
     if unshorten:
-        url = unshorten_url(url, headers)
+        url = unshorten_url(url, client)
     if trim:
         url = trim_url(url)
     return url
@@ -262,7 +262,11 @@ def parse_time(
     return ts_utc.astimezone(tz)
 
 
-def download_media(url: str, filename: str = None) -> str:
+def download_media(
+    url: str,
+    filename: str = None,
+    client: httpx.Client = httpx.Client(),
+) -> str:
     """Download a file from a URL and save it to a path.
     Useful for downloading images and other media where the
     file format is provided in the Content-Type response header.
@@ -277,8 +281,8 @@ def download_media(url: str, filename: str = None) -> str:
     Returns:
         str: filename of the downloaded file.
     """
-    response = httpx.get(url)
-    assert response.status_code == 200, response.text
+    response = client.get(url)
+    assert response.status_code == httpx.codes.OK, response.text
     if not filename:
         name = furl(url).path.segments[-1]
         media_type = response.headers.get("Content-Type").split("/")[1]
@@ -397,7 +401,8 @@ class Markup:
     url (str): URL to prepare and fetch content from.
     unshorten (bool, optional): Unshorten the URL. Defaults to True.
     trim (bool, optional): Unshorten the URL. Defaults to True.
-    headers (dict, optional): Headers for the httpx session. Defaults to {}.
+    client (httpx.Client, optional): httpx.Client for the session.
+        Defaults to httpx.Client().
     meta_arrays (list, optional): List of meta tags to be converted to arrays. Defaults to None.
         See the gather_meta() docstring for more details on meta_arrays.
 
@@ -415,7 +420,7 @@ class Markup:
         parser: str = "lxml",
         unshorten: bool = True,
         trim: bool = True,
-        headers: dict = {},
+        client: httpx.Client = httpx.Client(),
         meta_arrays: list = [],
     ):
         if not any((url, filepath)):
@@ -425,8 +430,8 @@ class Markup:
         if filepath:
             self.url = filepath
         if url:
-            self.headers = headers
-            url = prepare_url(url, unshorten, trim, self.headers)
+            self.client = client
+            url = prepare_url(url, unshorten, trim, self.client)
             self.url = url
         self.original = self.fetch_content(url=url, parser=parser, filepath=filepath)
         self.draft = copy.copy(self.original)
@@ -462,7 +467,7 @@ class Markup:
         if filepath:
             with open(filepath, "r") as f:
                 return BeautifulSoup(f.read(), parser)
-        response = httpx.get(url, headers=self.headers)
+        response = self.client.get(url)
         return BeautifulSoup(response.content, parser)
 
     def gather_meta(self, counts: bool = False) -> dict:
