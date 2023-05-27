@@ -11,7 +11,7 @@ from select import select
 from typing import Callable, List, NamedTuple, Union
 
 import httpx
-import pandoc
+import pypandoc
 import pytz
 from bs4 import BeautifulSoup, element
 from furl import furl
@@ -741,8 +741,12 @@ class Markup:
         Returns:
             str: Pandoc formatted output.
         """
-        doc = pandoc.read(self.draft.prettify(), format=input_format)
-        return pandoc.write(doc, format=output_format, options=output_options)
+        return pypandoc.convert_text(
+            source=self.draft.prettify(),
+            format=input_format,
+            to="md",
+            extra_args=output_options,
+        )
 
     def to_html(self, filepath: str = None) -> str:
         """Render the draft as HTML.

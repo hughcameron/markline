@@ -2,8 +2,9 @@ from copy import copy
 from datetime import datetime, timezone
 from unittest import result
 
-import markline as ml
 from bs4 import BeautifulSoup
+
+import markline as ml
 
 SHORT_URL = "https://tinyurl.com/mrx7da4n"
 # This short URL: https://tinyurl.com/mrx7da4n
@@ -108,7 +109,7 @@ def test_download_media():
 
 def test_new_attr():
     """Test the new_tag function."""
-    expected = '<p class="test">\n test\n</p>'
+    expected = '<p class="test">\n test\n</p>\n'
     test_tag = ml.new_tag("p", literal="test", attrs={"class": "test"}).prettify()
     assert test_tag == expected
 
@@ -140,7 +141,7 @@ def test_loc_attrs():
 
 def test_new_token():
     """Test the new_token function."""
-    expected = "<div>\n <pre><code>[[test]]</code></pre>\n</div>"
+    expected = "<div>\n <pre><code>[[test]]</code></pre>\n</div>\n"
     test_token = ml.new_token("[[test]]").prettify()
     assert test_token == expected
 
@@ -374,11 +375,10 @@ def test_prepend():
     """Test the prepend method.
     remote_html.draft is reset to ensure the test suite remains idempotent.
     """
-    excepted = "<div>\n <p>\n  test\n </p>\n <title>\n  Tips for writing a news article\n </title>\n</div>"
+    excepted = "<div>\n <p>\n  test\n </p>\n <title>\n  Tips for writing a news article\n </title>\n</div>\n"
     remote_html.filter("title")
     remote_html.prepend(ml.new_tag("p", literal="test"))
     soup_result = remote_html.to_html()
-    # print(soup_result)
     remote_html.draft = copy(remote_html.original)
     assert soup_result == excepted
 
