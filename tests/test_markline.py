@@ -360,6 +360,17 @@ def test_drop():
     assert soup_result == expected
 
 
+def test_drop_list():
+    """Test the drop method.
+    remote_html.draft is reset to ensure the test suite remains idempotent.
+    """
+    expected = '<article>\n <h1 id="tips-for-writing-a-news-article">\n  Tips for writing a news article\n </h1>\n</article>\n'
+    remote_html.drop([ml.loc("figure"), ml.loc("section"), ml.loc("p"), ml.loc("hr")])
+    soup_result = remote_html.filter(ml.loc("article")).to_html()
+    remote_html.draft = copy(remote_html.original)
+    assert soup_result == expected
+
+
 def test_drop_str():
     """Test the filter method with a string locator.
     remote_html.draft is reset to ensure the test suite remains idempotent.

@@ -664,6 +664,8 @@ class Markup:
             loc (CSSLocator | TagLocator | str): One or more locators of matching elements to drop.
         """
         for loc in locations:
+            if isinstance(loc, list):
+                self.drop(*loc)
             for result in self.select_all(loc):
                 result.decompose()
         return self
