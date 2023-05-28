@@ -591,6 +591,7 @@ class Markup:
             element.ResultSet: ResultSet of elements from query.
         """
         markup = getattr(self, version)
+        results = []
         if isinstance(loc, TagLocator):
             results = markup.find_all(*loc)
         if isinstance(loc, CSSLocator):
