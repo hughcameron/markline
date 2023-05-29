@@ -1,4 +1,4 @@
-# <img src="img/markline.svg" width="200">
+# <img src="https://raw.githubusercontent.com/hughcameron/markline/main/img/markline.svg" width="200">
 
 **Markline** converts HTML to Markdown and supports transformation methods borrowed from data engineering concepts. The goal of this project is to provide a simple API that renders HTML to Markdown for note management applications such as [Logseq](https://logseq.com).
 
