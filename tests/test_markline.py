@@ -20,7 +20,8 @@ remote_html = ml.Markup(SHORT_URL)
 local_html = ml.Markup(filepath=LOCAL_HTML)
 
 with open("tests/test.html") as f:
-    soup_html = BeautifulSoup(f.read(), "lxml")
+    local_text = f.read()
+    soup_html = BeautifulSoup(local_text, "lxml")
 
 with open("tests/test.md") as f:
     local_md = f.read()
@@ -147,11 +148,17 @@ def test_new_token():
 
 
 def test_fetch_url_content():
+    print(remote_html.to_html())
+    print(soup_html.prettify())
     assert remote_html.to_html() == soup_html.prettify()
 
 
 def test_fetch_local_content():
     assert local_html.to_html() == soup_html.prettify()
+
+
+def test_load_local_content():
+    assert local_html.to_html() == ml.Markup(text=local_text).to_html()
 
 
 def test_gather_meta():

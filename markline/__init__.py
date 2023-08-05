@@ -6,8 +6,6 @@ import re
 from builtins import slice
 from collections import Counter
 from datetime import datetime
-from html import unescape
-from select import select
 from typing import Callable, List, NamedTuple, Union
 
 import httpx
@@ -77,7 +75,7 @@ class CSSLocator(NamedTuple):
 
 
 def loc(
-    name_selector: str,
+    name_selector: str = None,
     attrs: dict = {},
     recursive: bool = True,
     namespaces: dict = {},
@@ -417,23 +415,28 @@ class Markup:
         self,
         url: str = None,
         filepath: str = None,
+        text: str = None,
         parser: str = "lxml",
         unshorten: bool = True,
         trim: bool = True,
         client: httpx.Client = httpx.Client(),
         meta_arrays: list = [],
     ):
-        if not any((url, filepath)):
-            raise ValueError("One of URL or filepath must be provided.")
-        if all((url, filepath)):
-            raise ValueError("Only one of URL or filepath can be provided.")
+        if not any((url, filepath, text)):
+            raise ValueError("One of URL, filepath or text must be provided.")
+        if all((url, filepath, text)):
+            raise ValueError("Only one of URL, filepath or text can be provided.")
+        if text:
+            self.url = "text_supplied"
         if filepath:
             self.url = filepath
         if url:
             self.client = client
             url = prepare_url(url, unshorten, trim, self.client)
             self.url = url
-        self.original = self.fetch_content(url=url, parser=parser, filepath=filepath)
+        self.original = self.fetch_content(
+            url=url, parser=parser, filepath=filepath, text=text
+        )
         self.draft = copy.copy(self.original)
         self.meta_arrays = meta_arrays
         self.meta = self.gather_meta()
@@ -444,6 +447,7 @@ class Markup:
         url: str,
         parser: str = "lxml",
         filepath: str = None,
+        text: str = None,
     ) -> BeautifulSoup:
         """Fetch the HTML content of a URL.
         Content is fetched from the URL or local file and parsed as
@@ -464,6 +468,8 @@ class Markup:
         """
         if parser == "lxml" and not package_available("lxml"):
             parser = "html.parser"
+        if text:
+            return BeautifulSoup(text, parser)
         if filepath:
             with open(filepath, "r") as f:
                 return BeautifulSoup(f.read(), parser)
@@ -765,7 +771,7 @@ class Markup:
                 return f.write(self.draft.prettify())
         return self.draft.prettify()
 
-    def to_md(self, filepath: str = None, outliner: str = None) -> str:
+    def to_md(self, filepath: str = None, outliner: str = None, **kwargs) -> str:
         """Render the draft as Markdown.
         Accepts the default input and output formats for the render() method.
 
@@ -775,13 +781,15 @@ class Markup:
         to generate an block outline suitable for use in Logseq. Currently only the
         `newlines` and `paragraphs` outliners are supported.
 
+        Args:
+            filepath (str, optional): Filepath to write HTML content to.
+            outliner (str, optional): A block outlining style.
+            kwargs: Additional arguments to pass to the render() method.
+
         Returns:
             str: Markdown content.
-            filepath (str, optional): Filepath to write HTML content to.
-                Defaults to None.
-            outliner (str, optional): A block outlining style.
         """
-        markdown = self.render()
+        markdown = self.render(**kwargs)
         outline_approach = {
             "newlines": outline_newlines,
             "paragraphs": outline_paragraphs,
