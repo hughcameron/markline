@@ -747,7 +747,7 @@ class Markup:
         return pypandoc.convert_text(
             source=self.draft.prettify(),
             format=input_format,
-            to="md",
+            to=output_format,
             extra_args=output_options,
         )
 
