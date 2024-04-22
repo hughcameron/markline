@@ -520,7 +520,7 @@ class Markup:
             properties (dict): Default properties to store.
         """
         return {
-            "headline": coalesce(self.meta.get("og:title"), self.original.title.string),
+            "title": self.meta.get("og:title"),
             "description": self.meta.get("og:description"),
             "publisher": self.meta.get("og:site_name"),
             "url": self.url,
