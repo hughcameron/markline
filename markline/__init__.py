@@ -726,7 +726,7 @@ class Markup:
     def render(
         self,
         input_format: str = "html-native_divs-native_spans",
-        output_format: str = "gfm",
+        output_format: str = "gfm-raw_html",
         output_options: List[str] = ["--wrap=none"],
     ) -> str:
         """Render the draft HTML content to a Pandoc formatted output.
@@ -742,7 +742,7 @@ class Markup:
                 Defaults to "html-native_divs-native_spans". This is recommended to
                 preserve only the necessary HTML tags and attributes.
             output_format (str, optional): A Pandoc supported format.
-                Defaults to "gfm" or Github Flavored Markdown (GFM).
+                Defaults to "gfm-raw_html" or Github Flavored Markdown (GFM).
             output_options (List[str], optional): A list of Pandoc write options.
                 Defaults to ["--wrap=none"]. See available options:
                 https://pandoc.org/MANUAL.html#options
