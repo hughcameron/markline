@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "markline"
-version = "0.3.2"
+version = "0.3.3"
 description = "Convert Markup to Markdown with a transformation pipeline."
 authors = ["Hugh Cameron <hescameron+githubprojects@gmail.com>"]
 license = "MIT"
